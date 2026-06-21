@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert, StatusBar, Modal } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, StatusBar } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -8,6 +8,7 @@ import type { Document } from '@/lib/types'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
 import ScreenHeader from '@/components/ui/ScreenHeader'
 import { PrimaryButton, OutlineButton } from '@/components/ui/Buttons'
+import AppModal from '@/components/ui/AppModal'
 
 interface FeeItem {
   id: string
@@ -34,13 +35,14 @@ export default function DocumentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const [doc, setDoc] = useState<Document | null>(null)
   const [loading, setLoading] = useState(true)
+  const [modal, setModal] = useState({ visible: false, title: '', message: '' })
 
   useEffect(() => {
     (async () => {
       try {
         const d = await getDocument(Number(id))
         setDoc(d)
-      } catch { Alert.alert('Erreur', 'Document introuvable'); router.back() }
+      } catch { setModal({ visible: true, title: 'Erreur', message: 'Document introuvable' }) }
       finally { setLoading(false) }
     })()
   }, [id])
@@ -169,6 +171,14 @@ export default function DocumentDetailScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <AppModal
+        visible={modal.visible}
+        type="error"
+        title={modal.title}
+        message={modal.message}
+        buttons={[{ text: 'OK', primary: true, onPress: () => router.back() }]}
+        onClose={() => setModal(prev => ({ ...prev, visible: false }))}
+      />
     </SafeAreaView>
   )
 }

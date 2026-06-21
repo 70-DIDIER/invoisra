@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native'
+import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import ScreenHeader from '@/components/ui/ScreenHeader'
 import StepIndicator from '@/components/ui/StepIndicator'
 import { OutlineButton, PrimaryButton } from '@/components/ui/Buttons'
 import { createDocument, updateDocument } from '@/lib/document'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
+import AppModal from '@/components/ui/AppModal'
 
 interface FeeItem {
   id: string
@@ -22,6 +23,7 @@ export default function NewDocumentFrais() {
     return [{ id: '1', label: "Main d'œuvre", amount: '0' }]
   })
   const [saving, setSaving] = useState(false)
+  const [modal, setModal] = useState<{ visible: boolean; type: 'success'|'error'; title: string; message: string; buttons?: { text: string; onPress?: () => void; primary?: boolean }[] }>({ visible: false, type: 'success', title: '', message: '' })
 
   function updateFee(id: string, field: keyof FeeItem, value: string) {
     setFees(prev => prev.map(f => f.id === id ? { ...f, [field]: value } : f))
@@ -89,10 +91,13 @@ export default function NewDocumentFrais() {
           })
         }
         await saveFees(parseInt(params.editId))
-        Alert.alert('Succès', 'Document modifié avec succès', [
-          { text: 'Voir le document', onPress: () => router.replace(`/documents/${params.editId}`) },
-          { text: 'Retour au tableau de bord', onPress: () => router.replace('/(tabs)') },
-        ])
+        setModal({
+          visible: true, type: 'success', title: 'Succès', message: 'Document modifié avec succès',
+          buttons: [
+            { text: 'Voir le document', primary: true, onPress: () => router.replace(`/documents/${params.editId}`) },
+            { text: 'Retour au tableau de bord', onPress: () => router.replace('/(tabs)') },
+          ],
+        })
       } else {
         const doc = await createDocument(payload)
         if (items.length > 0) {
@@ -105,13 +110,16 @@ export default function NewDocumentFrais() {
           }
         }
         await saveFees(doc.id)
-        Alert.alert('Succès', 'Document créé avec succès', [
-          { text: 'Voir le document', onPress: () => router.replace(`/documents/${doc.id}`) },
-          { text: 'Retour au tableau de bord', onPress: () => router.replace('/(tabs)') },
-        ])
+        setModal({
+          visible: true, type: 'success', title: 'Succès', message: 'Document créé avec succès',
+          buttons: [
+            { text: 'Voir le document', primary: true, onPress: () => router.replace(`/documents/${doc.id}`) },
+            { text: 'Retour au tableau de bord', onPress: () => router.replace('/(tabs)') },
+          ],
+        })
       }
     } catch (err: any) {
-      Alert.alert('Erreur', err.response?.data?.message || "Impossible de créer le document")
+      setModal({ visible: true, type: 'error', title: 'Erreur', message: err.response?.data?.message || 'Impossible de créer le document' })
     } finally { setSaving(false) }
   }
 
@@ -166,6 +174,14 @@ export default function NewDocumentFrais() {
           </View>
         </View>
       </ScrollView>
+      <AppModal
+        visible={modal.visible}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        buttons={modal.buttons}
+        onClose={() => setModal(prev => ({ ...prev, visible: false }))}
+      />
     </View>
   )
 }

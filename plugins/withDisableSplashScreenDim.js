@@ -11,18 +11,18 @@ function withDisableSplashScreenDim(config) {
 
     if (splashStyle) {
       const items = splashStyle.item || [];
-      const hasDim = items.some(
-        (item) =>
-          item.$.name === 'windowSplashScreenDimBackground' ||
-          item.$.name === 'android:windowSplashScreenDimBackground'
-      );
 
-      if (!hasDim) {
-        items.push({
-          $: { name: 'windowSplashScreenDimBackground' },
-          _: 'false',
-        });
-      }
+      const setItem = (name, value) => {
+        const existing = items.findIndex((item) => item.$.name === name);
+        if (existing >= 0) {
+          items[existing]._ = value;
+        } else {
+          items.push({ $: { name }, _: value });
+        }
+      };
+
+      setItem('android:windowSplashScreenDimBackground', 'false');
+      setItem('android:windowSplashScreenIconBackgroundColor', '@android:color/transparent');
     }
 
     return config;

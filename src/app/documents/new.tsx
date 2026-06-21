@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native'
+import { View, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import ScreenHeader from '@/components/ui/ScreenHeader'
@@ -10,6 +10,7 @@ import { getClients } from '@/lib/client'
 import { getCompany } from '@/lib/company'
 import type { Client } from '@/lib/types'
 import { COLORS, SPACING } from '@/constants/colors'
+import AppModal from '@/components/ui/AppModal'
 
 function cleanNotes(notes: string | null): string {
   if (!notes) return ''
@@ -47,6 +48,7 @@ export default function NewDocumentStep1() {
   const [notes, setNotes] = useState(cleanNotes(params.notes ?? null) || '')
   const [showPicker, setShowPicker] = useState<'issue' | 'validity' | null>(null)
   const [checking, setChecking] = useState(true)
+  const [modal, setModal] = useState<{ visible: boolean; title: string; message: string; buttons?: { text: string; onPress?: () => void; primary?: boolean }[] }>({ visible: false, title: '', message: '' })
 
   function handleDateChange(_event: DateTimePickerEvent, selectedDate?: Date) {
     if (_event.type === 'dismissed' || !selectedDate) {
@@ -73,14 +75,15 @@ export default function NewDocumentStep1() {
       } catch {
         if (!mounted) return
         setChecking(false)
-        Alert.alert(
-          'Entreprise requise',
-          'Vous devez d\'abord configurer votre entreprise avant de créer un document.',
-          [
-            { text: 'Configurer', onPress: () => router.push('/company/edit') },
+        setModal({
+          visible: true,
+          title: 'Entreprise requise',
+          message: 'Vous devez d\'abord configurer votre entreprise avant de créer un document.',
+          buttons: [
+            { text: 'Configurer', primary: true, onPress: () => router.push('/company/edit') },
             { text: 'Annuler', onPress: () => router.back() },
-          ]
-        )
+          ],
+        })
         return
       }
       if (!params.editId) {
@@ -147,6 +150,14 @@ export default function NewDocumentStep1() {
           />
         )}
       </KeyboardAvoidingView>
+      <AppModal
+        visible={modal.visible}
+        type="info"
+        title={modal.title}
+        message={modal.message}
+        buttons={modal.buttons}
+        onClose={() => setModal(prev => ({ ...prev, visible: false }))}
+      />
     </View>
   )
 }

@@ -1,18 +1,18 @@
 import { useState } from 'react'
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, StatusBar, Alert } from 'react-native'
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, StatusBar, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/hooks/useAuth'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
+import GoogleAuthBrowser from '@/components/ui/GoogleAuthWebView'
 
 export default function LoginScreen() {
-  const { login, googleLogin } = useAuth()
+  const { login, googleLogin, handleGoogleCallbackUrl } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleUrl, setGoogleUrl] = useState<string | null>(null)
 
   async function handleLogin() {
     if (!email || !password) { setError('Veuillez remplir tous les champs'); return }
@@ -26,13 +26,35 @@ export default function LoginScreen() {
   }
 
   async function handleGoogle() {
-    setGoogleLoading(true); setError('')
+    setError('')
     try {
-      await googleLogin()
+      console.log('[Login] Starting Google auth...')
+      const url = await googleLogin()
+      console.log('[Login] Opening WebView with URL')
+      setGoogleUrl(url)
+    } catch (err: any) {
+      console.log('[Login] Google auth error:', err.message)
+      setError(err.message || 'Erreur Google')
+    }
+  }
+
+  async function handleGoogleSuccess(callbackUrl: string) {
+    try {
+      await handleGoogleCallbackUrl(callbackUrl)
+      console.log('[Login] Google auth successful, redirecting...')
+      setGoogleUrl(null)
       router.replace('/')
     } catch (err: any) {
+      console.log('[Login] Callback failed:', err.message)
+      setGoogleUrl(null)
       setError(err.message || 'Erreur Google')
-    } finally { setGoogleLoading(false) }
+    }
+  }
+
+  function handleGoogleError(msg: string) {
+    console.log('[Login] Google error:', msg)
+    setGoogleUrl(null)
+    setError(msg)
   }
 
   return (
@@ -55,13 +77,21 @@ export default function LoginScreen() {
           <Text style={styles.dividerText}>ou</Text>
           <View style={styles.dividerLine} />
         </View>
-        <TouchableOpacity style={styles.googleButton} onPress={handleGoogle} disabled={googleLoading}>
-          {googleLoading ? <ActivityIndicator color="#666" /> : <><Ionicons name="logo-google" size={20} color="#666" /><Text style={styles.googleButtonText}>   Continuer avec Google</Text></>}
+        <TouchableOpacity style={styles.googleButton} onPress={handleGoogle}>
+          <Image source={require('../../assets/images/google-logo.png')} style={styles.googleLogo} />
+          <Text style={styles.googleButtonText}>   Continuer avec Google</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/register')}>
           <Text style={styles.link}>Pas de compte ? Créez-en un</Text>
         </TouchableOpacity>
       </ScrollView>
+      <GoogleAuthBrowser
+        url={googleUrl || ''}
+        visible={!!googleUrl}
+        onSuccess={handleGoogleSuccess}
+        onError={handleGoogleError}
+        onClose={() => setGoogleUrl(null)}
+      />
     </SafeAreaView>
   )
 }
@@ -81,7 +111,8 @@ const styles = StyleSheet.create({
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 16 },
   dividerLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
   dividerText: { marginHorizontal: 12, color: COLORS.textMuted, fontSize: 13 },
-  googleButton: { flexDirection: 'row', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border, paddingVertical: 14, borderRadius: RADIUS.md, alignItems: 'center', marginTop: 4 },
+  googleButton: { flexDirection: 'row', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border, paddingVertical: 14, borderRadius: RADIUS.md, alignItems: 'center', marginTop: 4, backgroundColor: COLORS.white },
   googleButtonText: { color: COLORS.textPrimary, fontSize: 15, fontWeight: '600' },
+  googleLogo: { width: 20, height: 20, resizeMode: 'contain' },
   link: { color: COLORS.primary, textAlign: 'center', marginTop: SPACING.lg, fontSize: 14, fontWeight: '500' },
 })

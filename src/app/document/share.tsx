@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -7,10 +7,12 @@ import { COLORS, RADIUS, SPACING } from '@/constants/colors'
 import { sharePdf, shareViaWhatsApp, shareViaTelegram, shareViaEmail } from '@/lib/pdf'
 import { sendDocumentEmail } from '@/lib/document'
 import { useState } from 'react'
+import AppModal from '@/components/ui/AppModal'
 
 export default function ShareScreen() {
   const { id, clientEmail } = useLocalSearchParams<{ id?: string; clientEmail?: string }>()
   const [loading, setLoading] = useState<string | null>(null)
+  const [modal, setModal] = useState({ visible: false, type: 'success' as 'success'|'error', title: '', message: '' })
 
   async function handleShare(key: string) {
     if (!id) return
@@ -26,7 +28,7 @@ export default function ShareScreen() {
         case 'email':
           if (clientEmail) {
             await sendDocumentEmail(parseInt(id), clientEmail)
-            Alert.alert('Succès', 'Email envoyé avec le PDF')
+            setModal({ visible: true, type: 'success', title: 'Succès', message: 'Email envoyé avec le PDF' })
           } else {
             await shareViaEmail(parseInt(id))
           }
@@ -37,7 +39,7 @@ export default function ShareScreen() {
           break
       }
     } catch (err: any) {
-      Alert.alert('Erreur', err.message || 'Action indisponible')
+      setModal({ visible: true, type: 'error', title: 'Erreur', message: err.message || 'Action indisponible' })
     } finally { setLoading(null) }
   }
 
@@ -85,6 +87,13 @@ export default function ShareScreen() {
           ))}
         </View>
       </View>
+      <AppModal
+        visible={modal.visible}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        onClose={() => setModal(prev => ({ ...prev, visible: false }))}
+      />
     </SafeAreaView>
   )
 }

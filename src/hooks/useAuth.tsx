@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import * as WebBrowser from 'expo-web-browser'
 import api from '@/lib/api'
 import type { User, LoginResponse } from '@/lib/types'
 
@@ -11,8 +10,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string, passwordConfirmation: string) => Promise<void>
   logout: () => Promise<void>
-  googleLogin: () => Promise<void>
-  handleGoogleCallback: (code: string) => Promise<void>
+  googleLogin: () => Promise<string>
+  handleGoogleCallbackUrl: (url: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -73,40 +72,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function googleLogin() {
+    console.log('[GoogleAuth] Fetching OAuth URL...')
     const response = await api.get<{ url: string }>('/auth/google/redirect')
-    const googleUrl = response.data.url
-
-    const result = await WebBrowser.openAuthSessionAsync(googleUrl, 'invoica://auth/callback')
-
-    if (result.type === 'success' && result.url) {
-      const token = result.url.match(/[?&]token=([^&]+)/)?.[1]
-      const userJson = result.url.match(/[?&]user=([^&]+)/)?.[1]
-
-      if (token && userJson) {
-        await AsyncStorage.setItem('auth-token', token)
-        setToken(token)
-        const parsedUser: User = JSON.parse(decodeURIComponent(userJson))
-        setUser(parsedUser)
-        return
-      }
-    }
-
-    throw new Error('Authentification Google annulée ou échouée')
+    console.log('[GoogleAuth] URL received:', response.data.url?.substring(0, 80) + '...')
+    return response.data.url
   }
 
-  async function handleGoogleCallback(code: string) {
-    const response = await api.get<LoginResponse>(`/auth/google/callback`, {
-      params: { code },
-    })
-    const data = response.data
-    await AsyncStorage.setItem('auth-token', data.token)
-    setToken(data.token)
-    setUser(data.user)
+  async function handleGoogleCallbackUrl(url: string) {
+    console.log('[GoogleAuth] Processing callback URL:', url.substring(0, 120))
+    const token = url.match(/[?&]token=([^&]+)/)?.[1]
+    const userJson = url.match(/[?&]user=([^&]+)/)?.[1]
+    if (token && userJson) {
+      console.log('[GoogleAuth] Token+user from URL, saving...')
+      await AsyncStorage.setItem('auth-token', token)
+      setToken(token)
+      setUser(JSON.parse(decodeURIComponent(userJson)))
+      return
+    }
+    const code = url.match(/[?&]code=([^&]+)/)?.[1]
+    if (code) {
+      console.log('[GoogleAuth] Code from URL, exchanging...')
+      try {
+        const response = await api.get<LoginResponse>('/auth/google/callback', { params: { code } })
+        console.log('[GoogleAuth] Exchange success, token:', response.data.token?.substring(0, 20) + '...')
+        const data = response.data
+        await AsyncStorage.setItem('auth-token', data.token)
+        setToken(data.token)
+        setUser(data.user)
+      } catch (err: any) {
+        console.log('[GoogleAuth] Exchange failed:', err.response?.status, err.response?.data?.message || err.message)
+        throw err
+      }
+      return
+    }
+    console.log('[GoogleAuth] No token or code found in URL')
+    throw new Error('Aucun token ou code trouvé')
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, register, logout, googleLogin, handleGoogleCallback }}
+      value={{ user, token, isLoading, login, register, logout, googleLogin, handleGoogleCallbackUrl }}
     >
       {children}
     </AuthContext.Provider>
