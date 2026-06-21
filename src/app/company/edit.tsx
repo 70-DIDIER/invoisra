@@ -6,7 +6,7 @@ import { getCompany, createCompany, updateCompany } from '@/lib/company'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
 
 export default function CompanyEditScreen() {
-  const [form, setForm] = useState({ name: '', address: '', phone: '', email: '', manager_name: '', siret: '', vat_number: '' })
+  const [form, setForm] = useState({ name: '', address: '', phone: '', email: '', manager_name: '' })
   const [hasCompany, setHasCompany] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -17,7 +17,7 @@ export default function CompanyEditScreen() {
       try {
         const c = await getCompany()
         setHasCompany(true)
-        setForm({ name: c.name, address: c.address || '', phone: c.phone || '', email: c.email || '', manager_name: c.manager_name || '', siret: c.siret || '', vat_number: c.vat_number || '' })
+        setForm({ name: c.name, address: c.address || '', phone: c.phone || '', email: c.email || '', manager_name: c.manager_name || '' })
       } catch { }
       finally { setLoading(false) }
     })()
@@ -53,8 +53,6 @@ export default function CompanyEditScreen() {
         <Field label="Téléphone *" value={form.phone} onChange={v => setForm({ ...form, phone: v })} />
         <Field label="Email" value={form.email} onChange={v => setForm({ ...form, email: v })} keyboard="email-address" />
         <Field label="Gérant" value={form.manager_name} onChange={v => setForm({ ...form, manager_name: v })} />
-        <Field label="SIRET" value={form.siret} onChange={v => setForm({ ...form, siret: v })} />
-        <Field label="N° TVA" value={form.vat_number} onChange={v => setForm({ ...form, vat_number: v })} />
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
           {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Enregistrer</Text>}
         </TouchableOpacity>

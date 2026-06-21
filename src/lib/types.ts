@@ -16,8 +16,6 @@ export interface Company {
   phone: string | null
   email: string | null
   manager_name: string | null
-  siret: string | null
-  vat_number: string | null
   logo: string | null
   signature: string | null
   stamp: string | null
@@ -33,8 +31,6 @@ export interface Client {
   phone: string | null
   address: string | null
   company_name: string | null
-  siret: string | null
-  vat_number: string | null
   created_at: string
 }
 

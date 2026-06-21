@@ -6,9 +6,10 @@
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "invoica",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splsh.png",
+      "image": "./assets/images/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#0E7D36"
     },
@@ -20,6 +21,7 @@
       }
     },
     "android": {
+      "edgeToEdgeEnabled": true,
       "package": "com.invoica.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo.png",
@@ -31,7 +33,22 @@
       "favicon": "./assets/images/logo.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0E7D36",
+          "image": "./assets/images/logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "dark": {
+            "image": "./assets/images/logo.png",
+            "backgroundColor": "#0E7D36"
+          }
+        }
+      ],
+      "./plugins/withDisableSplashScreenDim",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

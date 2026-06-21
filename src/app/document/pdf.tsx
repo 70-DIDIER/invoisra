@@ -60,17 +60,17 @@ export default function PdfPreviewScreen() {
             <View style={styles.totalSection}>
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Sous-total</Text>
-                <Text style={styles.totalValue}>{sousTotal.toLocaleString('fr-FR')} F CFA</Text>
+                <Text style={styles.totalValue}>{sousTotal.toLocaleString('fr-FR')} FCFA</Text>
               </View>
               {fees.map((f: any, i: number) => (
                 <View key={i} style={styles.totalRow}>
                   <Text style={styles.totalLabel}>{f.label}</Text>
-                  <Text style={styles.totalValue}>{parseInt(f.amount).toLocaleString('fr-FR')} F CFA</Text>
+                  <Text style={styles.totalValue}>{parseInt(f.amount).toLocaleString('fr-FR')} FCFA</Text>
                 </View>
               ))}
               <View style={[styles.totalRow, styles.grandTotalRow]}>
                 <Text style={styles.grandTotalLabel}>Total général</Text>
-                <Text style={styles.grandTotalValue}>{totalGeneral.toLocaleString('fr-FR')} F CFA</Text>
+                <Text style={styles.grandTotalValue}>{totalGeneral.toLocaleString('fr-FR')} FCFA</Text>
               </View>
             </View>
           </View>

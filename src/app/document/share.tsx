@@ -1,20 +1,54 @@
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Alert, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenHeader from '@/components/ui/ScreenHeader'
-import { OutlineButton } from '@/components/ui/Buttons'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
-
-const SHARE_OPTIONS = [
-  { key: 'whatsapp', label: 'WhatsApp', icon: 'logo-whatsapp', color: COLORS.whatsapp },
-  { key: 'telegram', label: 'Telegram', icon: 'send', color: COLORS.telegram },
-  { key: 'email', label: 'Email', icon: 'mail-outline', color: COLORS.email },
-  { key: 'print', label: 'Imprimer', icon: 'print-outline', color: COLORS.textSecondary },
-  { key: 'save', label: "Enregistrer sur l'appareil", icon: 'download-outline', color: COLORS.textSecondary },
-]
+import { sharePdf, shareViaWhatsApp, shareViaTelegram, shareViaEmail } from '@/lib/pdf'
+import { sendDocumentEmail } from '@/lib/document'
+import { useState } from 'react'
 
 export default function ShareScreen() {
+  const { id, clientEmail } = useLocalSearchParams<{ id?: string; clientEmail?: string }>()
+  const [loading, setLoading] = useState<string | null>(null)
+
+  async function handleShare(key: string) {
+    if (!id) return
+    setLoading(key)
+    try {
+      switch (key) {
+        case 'whatsapp':
+          await shareViaWhatsApp(parseInt(id))
+          break
+        case 'telegram':
+          await shareViaTelegram(parseInt(id))
+          break
+        case 'email':
+          if (clientEmail) {
+            await sendDocumentEmail(parseInt(id), clientEmail)
+            Alert.alert('Succès', 'Email envoyé avec le PDF')
+          } else {
+            await shareViaEmail(parseInt(id))
+          }
+          break
+        case 'print':
+        case 'save':
+          await sharePdf(parseInt(id))
+          break
+      }
+    } catch (err: any) {
+      Alert.alert('Erreur', err.message || 'Action indisponible')
+    } finally { setLoading(null) }
+  }
+
+  const SHARE_OPTIONS = [
+    { key: 'whatsapp', label: 'WhatsApp', icon: 'logo-whatsapp', color: COLORS.whatsapp },
+    { key: 'telegram', label: 'Telegram', icon: 'send', color: COLORS.telegram },
+    { key: 'email', label: 'Email', icon: 'mail-outline', color: COLORS.email },
+    { key: 'print', label: 'Imprimer', icon: 'print-outline', color: COLORS.textSecondary },
+    { key: 'save', label: "Enregistrer sur l'appareil", icon: 'download-outline', color: COLORS.textSecondary },
+  ]
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.primary }}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
@@ -33,16 +67,23 @@ export default function ShareScreen() {
         <Text style={styles.readySub}>Que voulez-vous faire ?</Text>
         <View style={styles.optionsList}>
           {SHARE_OPTIONS.map(opt => (
-            <TouchableOpacity key={opt.key} style={styles.optionRow}>
+            <TouchableOpacity
+              key={opt.key}
+              style={styles.optionRow}
+              onPress={() => handleShare(opt.key)}
+              disabled={loading === opt.key}
+            >
               <View style={[styles.optionIcon, { backgroundColor: opt.color + '20' }]}>
-                <Ionicons name={opt.icon as any} size={20} color={opt.color} />
+                {loading === opt.key
+                  ? <ActivityIndicator size="small" color={opt.color} />
+                  : <Ionicons name={opt.icon as any} size={20} color={opt.color} />
+                }
               </View>
               <Text style={styles.optionLabel}>{opt.label}</Text>
               <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
             </TouchableOpacity>
           ))}
         </View>
-        <OutlineButton label="Annuler" onPress={() => router.back()} style={{ marginTop: SPACING.lg }} />
       </View>
     </SafeAreaView>
   )

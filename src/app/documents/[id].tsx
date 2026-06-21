@@ -3,11 +3,32 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert,
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { getDocument, deleteDocument, sendDocumentEmail } from '@/lib/document'
+import { getDocument } from '@/lib/document'
 import type { Document } from '@/lib/types'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
 import ScreenHeader from '@/components/ui/ScreenHeader'
 import { PrimaryButton, OutlineButton } from '@/components/ui/Buttons'
+
+interface FeeItem {
+  id: string
+  label: string
+  amount: string
+}
+
+function parseFeesFromNotes(notes: string | null): FeeItem[] {
+  if (!notes) return []
+  const match = notes.match(/___FEES___(\[.*?\])/s)
+  if (match) {
+    try { return JSON.parse(match[1]) } catch { return [] }
+  }
+  return []
+}
+
+function cleanNotes(notes: string | null): string {
+  if (!notes) return ''
+  const idx = notes.indexOf('___FEES___')
+  return idx >= 0 ? notes.substring(0, idx).trim() : notes.trim()
+}
 
 export default function DocumentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -24,32 +45,15 @@ export default function DocumentDetailScreen() {
     })()
   }, [id])
 
-  async function handleDelete() {
-    Alert.alert('Confirmer', 'Supprimer ce document ?', [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: async () => {
-        try { await deleteDocument(Number(id)); router.back() }
-        catch { Alert.alert('Erreur', 'Impossible de supprimer') }
-      }},
-    ])
-  }
-
-  async function handleSendEmail() {
-    const email = doc?.client?.email
-    if (!email) { Alert.alert('Erreur', 'Ce client n\'a pas d\'email renseigné'); return }
-    try {
-      await sendDocumentEmail(Number(id), email)
-      Alert.alert('Succès', `PDF envoyé à ${email}`)
-    } catch (err: any) {
-      Alert.alert('Erreur', err.response?.data?.message || "Impossible d'envoyer l'email")
-    }
-  }
-
   if (loading || !doc) {
     return <View style={styles.centered}><Text>Chargement...</Text></View>
   }
 
   const typeLabel = doc.type === 'quote' ? 'Devis' : 'Facture'
+  const feeItems = doc.items?.filter(i => i.designation.startsWith('FEE:')) || []
+  const articleItems = doc.items?.filter(i => !i.designation.startsWith('FEE:')) || []
+  const feesFromItems = feeItems.map(i => ({ id: i.id.toString(), label: i.designation.replace('FEE:', ''), amount: i.unit_price }))
+  const fees = feesFromItems.length > 0 ? feesFromItems : parseFeesFromNotes(doc.notes)
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.primary }}>
@@ -78,7 +82,7 @@ export default function DocumentDetailScreen() {
             <Text style={[styles.th, { flex: 0.5, textAlign: 'center' }]}>Qté</Text>
             <Text style={[styles.th, { flex: 0.8, textAlign: 'right' }]}>Montant</Text>
           </View>
-          {doc.items?.map((item, i) => (
+          {articleItems.map((item, i) => (
             <View key={i} style={styles.tableRow}>
               <Text style={[styles.td, { flex: 2 }]}>{item.designation}</Text>
               <Text style={[styles.td, { flex: 0.5, textAlign: 'center' }]}>{item.quantity}</Text>
@@ -90,36 +94,78 @@ export default function DocumentDetailScreen() {
           <View style={styles.totalSection}>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Sous-total</Text>
-              <Text style={styles.totalValue}>{parseFloat(doc.subtotal).toLocaleString('fr-FR')} F CFA</Text>
+              <Text style={styles.totalValue}>{parseFloat(doc.subtotal).toLocaleString('fr-FR')} FCFA</Text>
             </View>
-            {parseFloat(doc.labor_cost) > 0 && (
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Main d'œuvre</Text>
-                <Text style={styles.totalValue}>{parseFloat(doc.labor_cost).toLocaleString('fr-FR')} F CFA</Text>
+            {fees.length > 0 ? fees.map((fee, i) => (
+              <View key={i} style={styles.totalRow}>
+                <Text style={styles.totalLabel}>{fee.label}</Text>
+                <Text style={styles.totalValue}>{parseInt(fee.amount).toLocaleString('fr-FR')} FCFA</Text>
               </View>
-            )}
-            {parseFloat(doc.transport_cost) > 0 && (
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Transport</Text>
-                <Text style={styles.totalValue}>{parseFloat(doc.transport_cost).toLocaleString('fr-FR')} F CFA</Text>
-              </View>
-            )}
-            {parseFloat(doc.other_cost) > 0 && (
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Autres frais</Text>
-                <Text style={styles.totalValue}>{parseFloat(doc.other_cost).toLocaleString('fr-FR')} F CFA</Text>
+            )            ) : (
+              <View>
+                {parseFloat(doc.labor_cost) > 0 && (
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalLabel}>Main d'œuvre</Text>
+                    <Text style={styles.totalValue}>{parseFloat(doc.labor_cost).toLocaleString('fr-FR')} FCFA</Text>
+                  </View>
+                )}
+                {parseFloat(doc.transport_cost) > 0 && (
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalLabel}>Transport</Text>
+                    <Text style={styles.totalValue}>{parseFloat(doc.transport_cost).toLocaleString('fr-FR')} FCFA</Text>
+                  </View>
+                )}
+                {parseFloat(doc.other_cost) > 0 && (
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalLabel}>Autres frais</Text>
+                    <Text style={styles.totalValue}>{parseFloat(doc.other_cost).toLocaleString('fr-FR')} FCFA</Text>
+                  </View>
+                )}
               </View>
             )}
             <View style={[styles.totalRow, styles.grandTotal]}>
               <Text style={styles.grandTotalLabel}>Total général</Text>
-              <Text style={styles.grandTotalValue}>{parseFloat(doc.total).toLocaleString('fr-FR')} F CFA</Text>
+              <Text style={styles.grandTotalValue}>{parseFloat(doc.total).toLocaleString('fr-FR')} FCFA</Text>
             </View>
           </View>
         </View>
         <View style={styles.actions}>
-          <PrimaryButton label="Envoyer par email" icon="mail-outline" onPress={handleSendEmail} />
-          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-            <Text style={styles.deleteBtnText}>Supprimer</Text>
+          <PrimaryButton label="Partager / Télécharger PDF" icon="share-outline" onPress={() => router.push({ pathname: '/document/share', params: { id, clientEmail: doc.client?.email } })} />
+          <TouchableOpacity style={styles.editBtn} onPress={() => {
+            const feeItemData = doc.items?.filter(i => i.designation.startsWith('FEE:')) || []
+            const articleData = doc.items?.filter(i => !i.designation.startsWith('FEE:')) || []
+            const itemsJson = JSON.stringify(articleData.map(i => ({
+              id: i.id.toString(), designation: i.designation,
+              quantity: i.quantity, unitPrice: i.unit_price,
+            })))
+            const feesFromItems = feeItemData.map(i => ({
+              id: i.id.toString(), label: i.designation.replace('FEE:', ''),
+              amount: i.unit_price,
+            }))
+            const feesFromNotes = parseFeesFromNotes(doc.notes)
+            const feesJson = JSON.stringify(feesFromItems.length > 0 ? feesFromItems : feesFromNotes.length > 0 ? feesFromNotes : [
+              ...(parseFloat(doc.labor_cost) > 0 ? [{ id: '1', label: "Main d'œuvre", amount: doc.labor_cost }] : []),
+              ...(parseFloat(doc.transport_cost) > 0 ? [{ id: '2', label: 'Transport', amount: doc.transport_cost }] : []),
+              ...(parseFloat(doc.other_cost) > 0 ? [{ id: '3', label: 'Autres frais', amount: doc.other_cost }] : []),
+            ])
+            router.push({
+              pathname: '/documents/new',
+              params: {
+                editId: doc.id,
+                type: doc.type,
+                issueDate: (doc.issue_date || '').split('T')[0],
+                clientId: doc.client_id,
+                clientName: doc.client?.name,
+                projectName: doc.project_name || '',
+                validUntil: (doc.valid_until || '').split('T')[0],
+                notes: cleanNotes(doc.notes),
+                items: itemsJson,
+                sousTotal: doc.subtotal,
+                fees: feesJson,
+              },
+            })
+          }}>
+            <Text style={styles.editBtnText}>Éditer</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -153,6 +199,6 @@ const styles = StyleSheet.create({
   grandTotalLabel: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
   grandTotalValue: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
   actions: { marginTop: SPACING.lg, gap: 12 },
-  deleteBtn: { borderWidth: 1, borderColor: COLORS.danger, borderRadius: RADIUS.md, paddingVertical: 15, alignItems: 'center' },
-  deleteBtnText: { color: COLORS.danger, fontSize: 15, fontWeight: '600' },
+  editBtn: { borderWidth: 1, borderColor: COLORS.primary, borderRadius: RADIUS.md, paddingVertical: 15, alignItems: 'center' },
+  editBtnText: { color: COLORS.primary, fontSize: 15, fontWeight: '600' },
 })

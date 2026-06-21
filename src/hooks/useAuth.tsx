@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as WebBrowser from 'expo-web-browser'
 import api from '@/lib/api'
 import type { User, LoginResponse } from '@/lib/types'
 
@@ -10,7 +11,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string, passwordConfirmation: string) => Promise<void>
   logout: () => Promise<void>
-  googleLogin: () => Promise<string>
+  googleLogin: () => Promise<void>
   handleGoogleCallback: (code: string) => Promise<void>
 }
 
@@ -73,7 +74,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function googleLogin() {
     const response = await api.get<{ url: string }>('/auth/google/redirect')
-    return response.data.url
+    const googleUrl = response.data.url
+
+    const result = await WebBrowser.openAuthSessionAsync(googleUrl, 'invoica://auth/callback')
+
+    if (result.type === 'success' && result.url) {
+      const token = result.url.match(/[?&]token=([^&]+)/)?.[1]
+      const userJson = result.url.match(/[?&]user=([^&]+)/)?.[1]
+
+      if (token && userJson) {
+        await AsyncStorage.setItem('auth-token', token)
+        setToken(token)
+        const parsedUser: User = JSON.parse(decodeURIComponent(userJson))
+        setUser(parsedUser)
+        return
+      }
+    }
+
+    throw new Error('Authentification Google annulée ou échouée')
   }
 
   async function handleGoogleCallback(code: string) {

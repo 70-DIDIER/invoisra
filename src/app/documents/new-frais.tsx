@@ -4,23 +4,47 @@ import { router, useLocalSearchParams } from 'expo-router'
 import ScreenHeader from '@/components/ui/ScreenHeader'
 import StepIndicator from '@/components/ui/StepIndicator'
 import { OutlineButton, PrimaryButton } from '@/components/ui/Buttons'
-import { createDocument } from '@/lib/document'
+import { createDocument, updateDocument } from '@/lib/document'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
+
+interface FeeItem {
+  id: string
+  label: string
+  amount: string
+}
 
 export default function NewDocumentFrais() {
   const params = useLocalSearchParams<any>()
-  const [laborCost, setLaborCost] = useState('25000')
-  const [transportCost, setTransportCost] = useState('5000')
-  const [otherCost, setOtherCost] = useState('3000')
+  const [fees, setFees] = useState<FeeItem[]>(() => {
+    if (params.fees) {
+      try { return JSON.parse(params.fees as string) } catch {}
+    }
+    return [{ id: '1', label: "Main d'œuvre", amount: '0' }]
+  })
   const [saving, setSaving] = useState(false)
 
+  function updateFee(id: string, field: keyof FeeItem, value: string) {
+    setFees(prev => prev.map(f => f.id === id ? { ...f, [field]: value } : f))
+  }
+
+  function removeFee(id: string) {
+    setFees(prev => prev.filter(f => f.id !== id))
+  }
+
+  function addFee() {
+    setFees(prev => [...prev, { id: Date.now().toString(), label: '', amount: '0' }])
+  }
+
   const sousTotal = parseInt(params.sousTotal || '0')
-  const totalFrais = (parseInt(laborCost) || 0) + (parseInt(transportCost) || 0) + (parseInt(otherCost) || 0)
+  const totalFrais = fees.reduce((sum, fee) => sum + (parseInt(fee.amount) || 0), 0)
   const totalGeneral = sousTotal + totalFrais
+
+  const isEdit = !!params.editId
 
   async function handleCreate() {
     setSaving(true)
     try {
+      const feeAmounts = fees.map(f => parseInt(f.amount) || 0)
       const payload: any = {
         client_id: parseInt(params.clientId),
         type: params.type || 'quote',
@@ -29,29 +53,63 @@ export default function NewDocumentFrais() {
         valid_until: params.validUntil || null,
         notes: params.notes || null,
         subtotal: sousTotal,
-        labor_cost: parseInt(laborCost) || 0,
-        transport_cost: parseInt(transportCost) || 0,
-        other_cost: parseInt(otherCost) || 0,
+        labor_cost: feeAmounts[0] || 0,
+        transport_cost: feeAmounts[1] || 0,
+        other_cost: feeAmounts.slice(2).reduce((s, v) => s + v, 0),
         total: totalGeneral,
       }
-      const doc = await createDocument(payload)
-      const docId = doc.id
 
+      const { default: api } = await import('@/lib/api')
       const items = params.items ? JSON.parse(params.items as string) : []
-      if (items.length > 0) {
-        const { default: api } = await import('@/lib/api')
+
+      async function saveFees(docId: number) {
+        for (const fee of fees) {
+          if (parseInt(fee.amount) > 0) {
+            await api.post(`/documents/${docId}/items`, {
+              designation: `FEE:${fee.label}`,
+              quantity: 1,
+              unit_price: parseFloat(fee.amount) || 0,
+            })
+          }
+        }
+      }
+
+      if (isEdit) {
+        await updateDocument(parseInt(params.editId), payload)
+        const existing = await api.get(`/documents/${params.editId}`)
+        const existingItems = existing.data.items || []
+        for (const oldItem of existingItems) {
+          try { await api.delete(`/documents/${params.editId}/items/${oldItem.id}`) } catch {}
+        }
         for (const item of items) {
-          await api.post(`/documents/${docId}/items`, {
+          await api.post(`/documents/${params.editId}/items`, {
             designation: item.designation || 'Article',
             quantity: parseFloat(item.quantity) || 1,
             unit_price: parseFloat(item.unitPrice) || 0,
           })
         }
+        await saveFees(parseInt(params.editId))
+        Alert.alert('Succès', 'Document modifié avec succès', [
+          { text: 'Voir le document', onPress: () => router.replace(`/documents/${params.editId}`) },
+          { text: 'Retour au tableau de bord', onPress: () => router.replace('/(tabs)') },
+        ])
+      } else {
+        const doc = await createDocument(payload)
+        if (items.length > 0) {
+          for (const item of items) {
+            await api.post(`/documents/${doc.id}/items`, {
+              designation: item.designation || 'Article',
+              quantity: parseFloat(item.quantity) || 1,
+              unit_price: parseFloat(item.unitPrice) || 0,
+            })
+          }
+        }
+        await saveFees(doc.id)
+        Alert.alert('Succès', 'Document créé avec succès', [
+          { text: 'Voir le document', onPress: () => router.replace(`/documents/${doc.id}`) },
+          { text: 'Retour au tableau de bord', onPress: () => router.replace('/(tabs)') },
+        ])
       }
-      Alert.alert('Succès', 'Document créé avec succès', [
-        { text: 'Voir le document', onPress: () => router.replace(`/documents/${docId}`) },
-        { text: 'Retour au tableau de bord', onPress: () => router.replace('/(tabs)') },
-      ])
     } catch (err: any) {
       Alert.alert('Erreur', err.response?.data?.message || "Impossible de créer le document")
     } finally { setSaving(false) }
@@ -59,25 +117,41 @@ export default function NewDocumentFrais() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
-      <ScreenHeader title={params.type === 'invoice' ? 'Nouvelle facture' : 'Nouveau devis'} showBack variant="white" />
+      <ScreenHeader title={isEdit ? 'Modifier le document' : params.type === 'invoice' ? 'Nouvelle facture' : 'Nouveau devis'} showBack variant="white" />
       <StepIndicator currentStep={3} />
-      <ScrollView contentContainerStyle={{ padding: SPACING.lg }} keyboardShouldPersistTaps="handled">
-        <Text style={styles.sectionLabel}>Frais supplémentaires</Text>
-        <FeeRow label="Main d'œuvre" value={laborCost} onChange={setLaborCost} />
-        <FeeRow label="Transport" value={transportCost} onChange={setTransportCost} />
-        <FeeRow label="Autres frais" value={otherCost} onChange={setOtherCost} />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: SPACING.lg }} keyboardShouldPersistTaps="handled">
+        <View style={styles.tableHeader}>
+          <Text style={[styles.th, { flex: 1.5 }]}>Frais</Text>
+          <Text style={[styles.th, { flex: 0.8, textAlign: 'right' }]}>Montant</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        {fees.length === 0 && (
+          <Text style={styles.emptyHint}>Ajoutez au moins un frais</Text>
+        )}
+        {fees.map(fee => (
+          <View key={fee.id} style={styles.feeRow}>
+            <TextInput style={[styles.cell, { flex: 1.5 }]} value={fee.label} onChangeText={v => updateFee(fee.id, 'label', v)} placeholder="Libellé" placeholderTextColor={COLORS.textMuted} />
+            <TextInput style={[styles.cell, { flex: 0.8, textAlign: 'right' }]} value={fee.amount} onChangeText={v => updateFee(fee.id, 'amount', v)} keyboardType="numeric" />
+            <TouchableOpacity onPress={() => removeFee(fee.id)} style={styles.deleteBtn}>
+              <Text style={styles.deleteBtnText}>X</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+        <TouchableOpacity style={styles.addBtn} onPress={addFee}>
+          <Text style={styles.addBtnText}>+ Ajouter un frais</Text>
+        </TouchableOpacity>
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Sous-total</Text>
-            <Text style={styles.summaryValue}>{sousTotal.toLocaleString('fr-FR')} F CFA</Text>
+            <Text style={styles.summaryValue}>{sousTotal.toLocaleString('fr-FR')} FCFA</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Total frais</Text>
-            <Text style={styles.summaryValue}>{totalFrais.toLocaleString('fr-FR')} F CFA</Text>
+            <Text style={styles.summaryValue}>{totalFrais.toLocaleString('fr-FR')} FCFA</Text>
           </View>
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total général</Text>
-            <Text style={styles.totalValue}>{totalGeneral.toLocaleString('fr-FR')} F CFA</Text>
+            <Text style={styles.totalValue}>{totalGeneral.toLocaleString('fr-FR')} FCFA</Text>
           </View>
         </View>
         <View style={styles.footerBtns}>
@@ -85,7 +159,7 @@ export default function NewDocumentFrais() {
           <View style={{ width: 12 }} />
           <View style={{ flex: 1 }}>
             <PrimaryButton
-              label={saving ? 'Création...' : 'Créer le document'}
+              label={saving ? 'Enregistrement...' : isEdit ? 'Enregistrer' : 'Créer le document'}
               onPress={handleCreate}
               disabled={saving}
             />
@@ -96,20 +170,16 @@ export default function NewDocumentFrais() {
   )
 }
 
-function FeeRow({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <View style={styles.feeRow}>
-      <Text style={styles.feeLabel}>{label}</Text>
-      <TextInput style={styles.feeInput} value={value} onChangeText={onChange} keyboardType="numeric" placeholderTextColor={COLORS.textMuted} />
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
-  sectionLabel: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 12 },
-  feeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.divider },
-  feeLabel: { fontSize: 14, color: COLORS.textPrimary, flex: 1 },
-  feeInput: { fontSize: 14, color: COLORS.textPrimary, paddingVertical: 4, paddingHorizontal: 8, backgroundColor: COLORS.background, borderRadius: RADIUS.sm, textAlign: 'right', minWidth: 100 },
+  tableHeader: { flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: COLORS.border, marginBottom: 8 },
+  th: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase' },
+  emptyHint: { textAlign: 'center', color: COLORS.textMuted, fontSize: 13, paddingVertical: 20 },
+  feeRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: COLORS.divider },
+  cell: { fontSize: 13, color: COLORS.textPrimary, paddingVertical: 4, paddingHorizontal: 4 },
+  deleteBtn: { width: 24, alignItems: 'center' },
+  deleteBtnText: { color: COLORS.danger, fontWeight: '700', fontSize: 14 },
+  addBtn: { backgroundColor: COLORS.primaryLighter, borderRadius: RADIUS.sm, paddingVertical: 10, alignItems: 'center', marginVertical: 12 },
+  addBtnText: { color: COLORS.primary, fontWeight: '600', fontSize: 13 },
   summaryCard: { backgroundColor: COLORS.background, borderRadius: RADIUS.md, padding: 14, marginTop: 16, marginBottom: 16 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
   summaryLabel: { fontSize: 13, color: COLORS.textSecondary },

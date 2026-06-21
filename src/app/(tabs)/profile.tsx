@@ -40,7 +40,6 @@ export default function ProfileScreen() {
         <FormFieldCard label="Adresse" value={company?.address || ''} />
         <FormFieldCard label="Téléphone" value={company?.phone || ''} />
         <FormFieldCard label="Email" value={company?.email || user?.email || ''} />
-        <FormFieldCard label="SIRET" value={company?.siret || ''} />
         <TouchableOpacity style={styles.editBtn} onPress={() => router.push('/company/edit')}>
           <Text style={styles.editBtnText}>Modifier</Text>
         </TouchableOpacity>

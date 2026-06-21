@@ -6,7 +6,7 @@ import { createClient } from '@/lib/client'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
 
 export default function NewClientScreen() {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', company_name: '', siret: '', vat_number: '' })
+  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', company_name: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -35,8 +35,6 @@ export default function NewClientScreen() {
         <Field label="Téléphone" value={form.phone} onChange={v => setForm({ ...form, phone: v })} />
         <Field label="Adresse" value={form.address} onChange={v => setForm({ ...form, address: v })} />
         <Field label="Entreprise" value={form.company_name} onChange={v => setForm({ ...form, company_name: v })} />
-        <Field label="SIRET" value={form.siret} onChange={v => setForm({ ...form, siret: v })} />
-        <Field label="N° TVA" value={form.vat_number} onChange={v => setForm({ ...form, vat_number: v })} />
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Enregistrer</Text>}
         </TouchableOpacity>

@@ -15,7 +15,12 @@ interface LineItem {
 
 export default function NewDocumentLignes() {
   const params = useLocalSearchParams<any>()
-  const [items, setItems] = useState<LineItem[]>([])
+  const [items, setItems] = useState<LineItem[]>(() => {
+    if (params.items) {
+      try { return JSON.parse(params.items as string) } catch {}
+    }
+    return []
+  })
 
   function updateItem(id: string, field: keyof LineItem, value: string) {
     setItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i))
@@ -40,7 +45,7 @@ export default function NewDocumentLignes() {
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
       <ScreenHeader title={params.type === 'invoice' ? 'Nouvelle facture' : 'Nouveau devis'} showBack variant="white" />
       <StepIndicator currentStep={2} />
-      <ScrollView contentContainerStyle={{ padding: SPACING.lg }} keyboardShouldPersistTaps="handled">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: SPACING.lg }} keyboardShouldPersistTaps="handled">
         <View style={styles.tableHeader}>
           <Text style={[styles.th, { flex: 2 }]}>Désignation</Text>
           <Text style={[styles.th, { flex: 0.7, textAlign: 'center' }]}>Qté</Text>
@@ -67,7 +72,7 @@ export default function NewDocumentLignes() {
         </TouchableOpacity>
         <View style={styles.sousTotalRow}>
           <Text style={styles.sousTotalLabel}>Sous-total</Text>
-          <Text style={styles.sousTotalValue}>{sousTotal.toLocaleString('fr-FR')} F CFA</Text>
+          <Text style={styles.sousTotalValue}>{sousTotal.toLocaleString('fr-FR')} FCFA</Text>
         </View>
         <View style={styles.footerBtns}>
           <View style={{ flex: 1 }}><OutlineButton label="Précédent" onPress={() => router.back()} /></View>

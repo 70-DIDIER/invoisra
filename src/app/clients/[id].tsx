@@ -7,7 +7,7 @@ import { COLORS, RADIUS, SPACING } from '@/constants/colors'
 
 export default function ClientDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', company_name: '', siret: '', vat_number: '' })
+  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', company_name: '' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -19,7 +19,6 @@ export default function ClientDetailScreen() {
         setForm({
           name: client.name, email: client.email || '', phone: client.phone || '',
           address: client.address || '', company_name: client.company_name || '',
-          siret: client.siret || '', vat_number: client.vat_number || '',
         })
       } catch { setError('Client introuvable') }
       finally { setLoading(false) }
@@ -53,8 +52,6 @@ export default function ClientDetailScreen() {
         <Field label="Téléphone" value={form.phone} onChange={v => setForm({ ...form, phone: v })} />
         <Field label="Adresse" value={form.address} onChange={v => setForm({ ...form, address: v })} />
         <Field label="Entreprise" value={form.company_name} onChange={v => setForm({ ...form, company_name: v })} />
-        <Field label="SIRET" value={form.siret} onChange={v => setForm({ ...form, siret: v })} />
-        <Field label="N° TVA" value={form.vat_number} onChange={v => setForm({ ...form, vat_number: v })} />
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
           {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Enregistrer</Text>}
         </TouchableOpacity>
