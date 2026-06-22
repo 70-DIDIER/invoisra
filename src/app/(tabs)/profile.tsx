@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Image } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { getCompany } from '@/lib/company'
 import type { Company } from '@/lib/types'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
+import { StatusBar } from 'expo-status-bar'
 import ScreenHeader from '@/components/ui/ScreenHeader'
 import FormFieldCard from '@/components/ui/FormFieldCard'
 import { PrimaryButton } from '@/components/ui/Buttons'
@@ -26,7 +27,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <StatusBar style="dark" />
       <ScreenHeader title="Profil entreprise" variant="white" titleAlign="left" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.sectionTitle}>Informations générales</Text>

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, StatusBar } from 'react-native'
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { getCompany, createCompany, updateCompany } from '@/lib/company'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
+import { StatusBar } from 'expo-status-bar'
 
 export default function CompanyEditScreen() {
   const [form, setForm] = useState({ name: '', address: '', phone: '', email: '', manager_name: '' })
@@ -41,7 +42,7 @@ export default function CompanyEditScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <StatusBar style="dark" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}><Text style={styles.back}>← Retour</Text></TouchableOpacity>
         <Text style={styles.title}>{hasCompany ? 'Modifier' : 'Configurer'} l'entreprise</Text>

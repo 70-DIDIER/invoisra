@@ -1,10 +1,13 @@
 import { Stack } from 'expo-router'
+import { StatusBar } from 'expo-status-bar'
 import { AuthProvider } from '@/hooks/useAuth'
+import { COLORS } from '@/constants/colors'
 
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
+      <StatusBar style="light" />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.primary } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="welcome" />
         <Stack.Screen name="login" />

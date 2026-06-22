@@ -1,15 +1,18 @@
 import { useState } from 'react'
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, StatusBar, Image } from 'react-native'
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Image, Pressable } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { useAuth } from '@/hooks/useAuth'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
+import { StatusBar } from 'expo-status-bar'
 import GoogleAuthBrowser from '@/components/ui/GoogleAuthWebView'
 
 export default function LoginScreen() {
   const { login, googleLogin, handleGoogleCallbackUrl } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleUrl, setGoogleUrl] = useState<string | null>(null)
@@ -59,7 +62,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <StatusBar style="dark" />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <TouchableOpacity onPress={() => router.back()} style={{ marginBottom: SPACING.lg }}>
           <Text style={styles.backText}>← Retour</Text>
@@ -68,7 +71,12 @@ export default function LoginScreen() {
         <Text style={styles.subtitle}>Connectez-vous à votre compte Invoiça</Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <TextInput style={styles.input} placeholder="Email" placeholderTextColor={COLORS.textMuted} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-        <TextInput style={styles.input} placeholder="Mot de passe" placeholderTextColor={COLORS.textMuted} value={password} onChangeText={setPassword} secureTextEntry />
+        <View style={styles.passwordContainer}>
+          <TextInput style={styles.passwordInput} placeholder="Mot de passe" placeholderTextColor={COLORS.textMuted} value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
+          <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+            <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={22} color={COLORS.textMuted} />
+          </Pressable>
+        </View>
         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Se connecter</Text>}
         </TouchableOpacity>
@@ -115,4 +123,10 @@ const styles = StyleSheet.create({
   googleButtonText: { color: COLORS.textPrimary, fontSize: 15, fontWeight: '600' },
   googleLogo: { width: 20, height: 20, resizeMode: 'contain' },
   link: { color: COLORS.primary, textAlign: 'center', marginTop: SPACING.lg, fontSize: 14, fontWeight: '500' },
+  passwordContainer: { position: 'relative', marginBottom: 12 },
+  passwordInput: {
+    backgroundColor: COLORS.background, padding: 14, borderRadius: RADIUS.md,
+    fontSize: 15, color: COLORS.textPrimary, borderWidth: 1, borderColor: COLORS.border, paddingRight: 44,
+  },
+  eyeBtn: { position: 'absolute', right: 12, top: 0, bottom: 0, justifyContent: 'center' },
 })

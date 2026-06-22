@@ -5,11 +5,10 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/splash.png",
-    "scheme": "invoisra",
+    "scheme": ["invoisra", "invoica"],
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#0E7D36"
     },
@@ -34,15 +33,23 @@
     },
     "plugins": [
       "expo-router",
+      ["expo-build-properties", {
+        "android": {
+          "newArchEnabled": true
+        },
+        "ios": {
+          "newArchEnabled": true
+        }
+      }],
       [
         "expo-splash-screen",
         {
           "backgroundColor": "#0E7D36",
-          "image": "./assets/images/logo.png",
+          "image": "./assets/images/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "dark": {
-            "image": "./assets/images/logo.png",
+            "image": "./assets/images/splash.png",
             "backgroundColor": "#0E7D36"
           }
         }
@@ -51,8 +58,13 @@
       "@react-native-community/datetimepicker"
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "dc432532-296b-4f63-9262-5e3d1b569b08"
+      }
     }
   }
 }

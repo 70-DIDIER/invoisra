@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import ScreenHeader from '@/components/ui/ScreenHeader'
@@ -21,6 +21,7 @@ export default function NewDocumentLignes() {
     }
     return []
   })
+  const inputRefs = useRef<Map<string, TextInput>>(new Map())
 
   function updateItem(id: string, field: keyof LineItem, value: string) {
     setItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i))
@@ -31,7 +32,9 @@ export default function NewDocumentLignes() {
   }
 
   function addItem() {
-    setItems(prev => [...prev, { id: Date.now().toString(), designation: '', quantity: '1', unitPrice: '0' }])
+    const newId = Date.now().toString()
+    setItems(prev => [...prev, { id: newId, designation: '', quantity: '1', unitPrice: '0' }])
+    setTimeout(() => inputRefs.current.get(newId)?.focus(), 100)
   }
 
   const sousTotal = items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0) * (parseInt(item.unitPrice) || 0), 0)
@@ -58,9 +61,9 @@ export default function NewDocumentLignes() {
         )}
         {items.map(item => (
           <View key={item.id} style={styles.itemRow}>
-            <TextInput style={[styles.cell, { flex: 2 }]} value={item.designation} onChangeText={v => updateItem(item.id, 'designation', v)} placeholder="Article" placeholderTextColor={COLORS.textMuted} />
-            <TextInput style={[styles.cell, { flex: 0.7, textAlign: 'center' }]} value={item.quantity} onChangeText={v => updateItem(item.id, 'quantity', v)} keyboardType="numeric" />
-            <TextInput style={[styles.cell, { flex: 0.7, textAlign: 'right' }]} value={item.unitPrice} onChangeText={v => updateItem(item.id, 'unitPrice', v)} keyboardType="numeric" />
+            <TextInput ref={r => { if (r) inputRefs.current.set(item.id, r) }} style={[styles.cell, { flex: 2 }]} value={item.designation} onChangeText={v => updateItem(item.id, 'designation', v)} placeholder="Article" placeholderTextColor={COLORS.textMuted} />
+            <TextInput style={[styles.cell, { flex: 0.7, textAlign: 'center' }]} value={item.quantity} onChangeText={v => updateItem(item.id, 'quantity', v)} keyboardType="numeric" onFocus={() => { if (item.quantity === '1') updateItem(item.id, 'quantity', '') }} />
+            <TextInput style={[styles.cell, { flex: 0.7, textAlign: 'right' }]} value={item.unitPrice} onChangeText={v => updateItem(item.id, 'unitPrice', v)} keyboardType="numeric" onFocus={() => { if (item.unitPrice === '0') updateItem(item.id, 'unitPrice', '') }} />
             <Text style={[styles.cellText, { flex: 0.8, textAlign: 'right' }]}>{(parseInt(item.quantity) * parseInt(item.unitPrice)).toLocaleString('fr-FR')}</Text>
             <TouchableOpacity onPress={() => removeItem(item.id)} style={styles.deleteBtn}>
               <Text style={styles.deleteBtnText}>X</Text>

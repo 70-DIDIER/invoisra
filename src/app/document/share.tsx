@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -53,7 +53,6 @@ export default function ShareScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.primary }}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <ScreenHeader title="Partager le document" showBack variant="green" />
       <View style={styles.body}>
         <View style={styles.docIconWrap}>

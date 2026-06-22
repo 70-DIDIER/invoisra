@@ -1,4 +1,4 @@
-import { File, Paths, EncodingType } from 'expo-file-system'
+import { File, Paths } from 'expo-file-system'
 import * as Sharing from 'expo-sharing'
 import * as Linking from 'expo-linking'
 import { Platform } from 'react-native'
@@ -7,7 +7,7 @@ import { downloadDocumentPdf, sendDocumentEmail } from './document'
 export async function downloadPdf(documentId: number): Promise<File> {
   const { content, filename } = await downloadDocumentPdf(documentId)
   const file = new File(Paths.cache, filename)
-  await file.write(content, { encoding: EncodingType.Base64 })
+  await file.write(content, { encoding: 'base64' })
   return file
 }
 

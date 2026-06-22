@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Platform } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar as RNStatusBar } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/hooks/useAuth'
@@ -9,6 +9,7 @@ import { getDocuments } from '@/lib/document'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
 
 export default function DashboardScreen() {
+  const insets = useSafeAreaInsets()
   const { user } = useAuth()
   const [stats, setStats] = useState({ quotes: 0, invoices: 0 })
   const [recentDocs, setRecentDocs] = useState<any[]>([])
@@ -24,16 +25,17 @@ export default function DashboardScreen() {
   useFocusEffect(useCallback(() => { loadData() }, []))
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Bonjour,</Text>
-          <Text style={styles.userName}>{user?.name || 'Artisan'} 👋</Text>
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <View style={{ paddingTop: Math.max(insets.top, RNStatusBar.currentHeight ?? 24), backgroundColor: COLORS.primary }}>
+        <View style={styles.headerInner}>
+          <View>
+            <Text style={styles.greeting}>Bonjour,</Text>
+            <Text style={styles.userName}>{user?.name || 'Artisan'} 👋</Text>
+          </View>
+          <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name="notifications-outline" size={24} color={COLORS.white} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Ionicons name="notifications-outline" size={24} color={COLORS.white} />
-        </TouchableOpacity>
       </View>
       <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>Vue d'ensemble</Text>
@@ -77,13 +79,12 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.primary },
-  header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: SPACING.lg, paddingTop: Platform.OS === 'ios' ? 12 : 16, paddingBottom: 28 },
+  headerInner: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: SPACING.lg, paddingTop: 12, paddingBottom: 28 },
   greeting: { color: 'rgba(255,255,255,0.85)', fontSize: 14 },
   userName: { color: COLORS.white, fontSize: 20, fontWeight: '700', marginTop: 2 },
   body: { flex: 1, backgroundColor: COLORS.background, borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, marginTop: -16 },

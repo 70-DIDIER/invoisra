@@ -28,13 +28,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadStoredAuth() {
     try {
       const storedToken = await AsyncStorage.getItem('auth-token')
-      if (storedToken) {
+      const storedUser = await AsyncStorage.getItem('auth-user')
+      if (storedToken && storedUser) {
         setToken(storedToken)
-        const response = await api.get('/me')
-        setUser(response.data.data ?? response.data)
+        setUser(JSON.parse(storedUser))
+        try {
+          const response = await api.get('/me')
+          const freshUser = response.data.data ?? response.data
+          setUser(freshUser)
+          await AsyncStorage.setItem('auth-user', JSON.stringify(freshUser))
+        } catch (error: any) {
+          if (error?.response?.status === 401) {
+            await AsyncStorage.removeItem('auth-token')
+            await AsyncStorage.removeItem('auth-user')
+            setToken(null)
+            setUser(null)
+          }
+        }
       }
-    } catch {
-      await AsyncStorage.removeItem('auth-token')
     } finally {
       setIsLoading(false)
     }
@@ -44,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await api.post<LoginResponse>('/login', { email, password })
     const data = response.data
     await AsyncStorage.setItem('auth-token', data.token)
+    await AsyncStorage.setItem('auth-user', JSON.stringify(data.user))
     setToken(data.token)
     setUser(data.user)
   }
@@ -57,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     const data = response.data
     await AsyncStorage.setItem('auth-token', data.token)
+    await AsyncStorage.setItem('auth-user', JSON.stringify(data.user))
     setToken(data.token)
     setUser(data.user)
   }
@@ -66,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api.post('/logout')
     } finally {
       await AsyncStorage.removeItem('auth-token')
+      await AsyncStorage.removeItem('auth-user')
       setToken(null)
       setUser(null)
     }
@@ -84,9 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userJson = url.match(/[?&]user=([^&]+)/)?.[1]
     if (token && userJson) {
       console.log('[GoogleAuth] Token+user from URL, saving...')
+      const user = JSON.parse(decodeURIComponent(userJson))
       await AsyncStorage.setItem('auth-token', token)
+      await AsyncStorage.setItem('auth-user', JSON.stringify(user))
       setToken(token)
-      setUser(JSON.parse(decodeURIComponent(userJson)))
+      setUser(user)
       return
     }
     const code = url.match(/[?&]code=([^&]+)/)?.[1]
@@ -97,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('[GoogleAuth] Exchange success, token:', response.data.token?.substring(0, 20) + '...')
         const data = response.data
         await AsyncStorage.setItem('auth-token', data.token)
+        await AsyncStorage.setItem('auth-user', JSON.stringify(data.user))
         setToken(data.token)
         setUser(data.user)
       } catch (err: any) {

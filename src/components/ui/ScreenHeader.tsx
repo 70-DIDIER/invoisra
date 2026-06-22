@@ -1,4 +1,6 @@
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Platform } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar as RNStatusBar } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { COLORS } from '@/constants/colors'
@@ -22,11 +24,13 @@ export default function ScreenHeader({
   variant = 'green',
   titleAlign = 'center',
 }: ScreenHeaderProps) {
+  const insets = useSafeAreaInsets()
   const isGreen = variant === 'green'
+  const paddingTop = Platform.OS === 'ios' ? 54 : Math.max(insets.top, RNStatusBar.currentHeight ?? 24) + 10
 
   return (
-    <View style={[styles.container, { backgroundColor: isGreen ? COLORS.primary : COLORS.white }]}>
-      <StatusBar barStyle={isGreen ? 'light-content' : 'dark-content'} backgroundColor={isGreen ? COLORS.primary : COLORS.white} />
+    <View style={[styles.container, { paddingTop, backgroundColor: isGreen ? COLORS.primary : COLORS.white }]}>
+      <StatusBar style={isGreen ? 'light' : 'dark'} />
       <View style={styles.row}>
         <View style={styles.side}>
           {showBack && (
@@ -52,7 +56,6 @@ export default function ScreenHeader({
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight || 24) + 10,
     paddingBottom: 16,
     paddingHorizontal: 16,
   },

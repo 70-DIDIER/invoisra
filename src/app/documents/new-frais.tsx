@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import ScreenHeader from '@/components/ui/ScreenHeader'
@@ -22,6 +22,7 @@ export default function NewDocumentFrais() {
     }
     return [{ id: '1', label: "Main d'œuvre", amount: '0' }]
   })
+  const feeRefs = useRef<Map<string, TextInput>>(new Map())
   const [saving, setSaving] = useState(false)
   const [modal, setModal] = useState<{ visible: boolean; type: 'success'|'error'; title: string; message: string; buttons?: { text: string; onPress?: () => void; primary?: boolean }[] }>({ visible: false, type: 'success', title: '', message: '' })
 
@@ -34,7 +35,9 @@ export default function NewDocumentFrais() {
   }
 
   function addFee() {
-    setFees(prev => [...prev, { id: Date.now().toString(), label: '', amount: '0' }])
+    const newId = Date.now().toString()
+    setFees(prev => [...prev, { id: newId, label: '', amount: '0' }])
+    setTimeout(() => feeRefs.current.get(newId)?.focus(), 100)
   }
 
   const sousTotal = parseInt(params.sousTotal || '0')
@@ -138,8 +141,8 @@ export default function NewDocumentFrais() {
         )}
         {fees.map(fee => (
           <View key={fee.id} style={styles.feeRow}>
-            <TextInput style={[styles.cell, { flex: 1.5 }]} value={fee.label} onChangeText={v => updateFee(fee.id, 'label', v)} placeholder="Libellé" placeholderTextColor={COLORS.textMuted} />
-            <TextInput style={[styles.cell, { flex: 0.8, textAlign: 'right' }]} value={fee.amount} onChangeText={v => updateFee(fee.id, 'amount', v)} keyboardType="numeric" />
+            <TextInput ref={r => { if (r) feeRefs.current.set(fee.id, r) }} style={[styles.cell, { flex: 1.5 }]} value={fee.label} onChangeText={v => updateFee(fee.id, 'label', v)} placeholder="Libellé" placeholderTextColor={COLORS.textMuted} />
+            <TextInput style={[styles.cell, { flex: 0.8, textAlign: 'right' }]} value={fee.amount} onChangeText={v => updateFee(fee.id, 'amount', v)} keyboardType="numeric" onFocus={() => { if (fee.amount === '0') updateFee(fee.id, 'amount', '') }} />
             <TouchableOpacity onPress={() => removeFee(fee.id)} style={styles.deleteBtn}>
               <Text style={styles.deleteBtnText}>X</Text>
             </TouchableOpacity>

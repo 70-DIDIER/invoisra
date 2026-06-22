@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, Text, ScrollView, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import ScreenHeader from '@/components/ui/ScreenHeader'
@@ -118,7 +118,13 @@ export default function NewDocumentStep1() {
     router.push({ pathname: '/documents/new-lignes', params: data as any })
   }
 
-  if (checking) return null
+  if (checking) {
+    return (
+      <View style={{ flex: 1, backgroundColor: COLORS.white, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    )
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>

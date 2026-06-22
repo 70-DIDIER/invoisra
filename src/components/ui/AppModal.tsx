@@ -93,15 +93,15 @@ const styles = StyleSheet.create({
     fontSize: 14, color: COLORS.textSecondary,
     marginTop: 8, textAlign: 'center', lineHeight: 20,
   },
-  btnRow: { flexDirection: 'row', marginTop: 20, gap: 10, width: '100%' },
+  btnRow: { marginTop: 20, width: '100%', gap: 8 },
   btn: {
-    flex: 1, paddingVertical: 12, borderRadius: RADIUS.md,
+    paddingVertical: 10, borderRadius: RADIUS.md,
     alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
     backgroundColor: COLORS.white,
   },
   btnPrimary: {
     backgroundColor: COLORS.primary, borderColor: COLORS.primary,
   },
-  btnText: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
+  btnText: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'center' },
   btnTextPrimary: { color: COLORS.white },
 })

@@ -1,10 +1,12 @@
 import { Tabs, Redirect } from 'expo-router'
-import { View, Text, ActivityIndicator, Platform } from 'react-native'
+import { View, ActivityIndicator } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/hooks/useAuth'
 import { COLORS } from '@/constants/colors'
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets()
   const { user, isLoading } = useAuth()
 
   if (isLoading) {
@@ -24,12 +26,13 @@ export default function TabsLayout() {
           borderTopWidth: 1,
           borderTopColor: COLORS.border,
           paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 22 : 12,
-          height: Platform.OS === 'ios' ? 80 : 64,
+          paddingBottom: Math.max(insets.bottom, 8),
+          height: 56 + Math.max(insets.bottom, 8),
         },
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textMuted,
         tabBarLabelStyle: { fontSize: 11, marginTop: 2 },
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tabs.Screen name="index" options={{

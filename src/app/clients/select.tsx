@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react'
-import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, StatusBar } from 'react-native'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -10,15 +10,22 @@ import { COLORS, RADIUS, SPACING } from '@/constants/colors'
 export default function ClientSelectScreen() {
   const [clients, setClients] = useState<Client[]>([])
   const [search, setSearch] = useState('')
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  async function loadClients() {
+  async function loadClients(query?: string) {
     try {
-      const res = await getClients(search || undefined)
+      const res = await getClients(query || undefined)
       setClients(res.data)
     } catch { }
   }
 
-  useFocusEffect(useCallback(() => { loadClients() }, [search]))
+  useFocusEffect(useCallback(() => { loadClients() }, []))
+
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => loadClients(search), 400)
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [search])
 
   function selectClient(client: Client) {
     router.navigate({
@@ -32,7 +39,6 @@ export default function ClientSelectScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.primary }}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}><Text style={styles.backBtn}>← Annuler</Text></TouchableOpacity>
         <Text style={styles.headerTitle}>Sélectionner un client</Text>
@@ -64,10 +70,6 @@ export default function ClientSelectScreen() {
           </TouchableOpacity>
         )}
       />
-      <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/clients/new')}>
-        <Ionicons name="add-circle-outline" size={20} color={COLORS.white} />
-        <Text style={styles.createBtnText}>   Créer un nouveau client</Text>
-      </TouchableOpacity>
     </SafeAreaView>
   )
 }
@@ -88,6 +90,4 @@ const styles = StyleSheet.create({
   clientInfo: { flex: 1 },
   clientName: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
   clientDetail: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  createBtn: { flexDirection: 'row', justifyContent: 'center', backgroundColor: COLORS.primaryDark, paddingVertical: 14, alignItems: 'center' },
-  createBtnText: { color: COLORS.white, fontSize: 15, fontWeight: '600' },
 })

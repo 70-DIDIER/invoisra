@@ -1,10 +1,64 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Image } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenHeader from '@/components/ui/ScreenHeader'
 import { OutlineButton, PrimaryButton } from '@/components/ui/Buttons'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
+
+function numberToWords(n: number): string {
+  if (n === 0) return 'zéro'
+
+  const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf']
+  const tens = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante-dix', 'quatre-vingt', 'quatre-vingt-dix']
+
+  function below1000(num: number): string {
+    const parts: string[] = []
+    const h = Math.floor(num / 100)
+    const r = num % 100
+
+    if (h === 1) parts.push('cent')
+    else if (h > 1) parts.push(units[h] + ' cent')
+
+    if (r > 0) {
+      if (r < 20) parts.push(units[r])
+      else {
+        const d = Math.floor(r / 10)
+        const u = r % 10
+        if (d === 7 || d === 9) {
+          parts.push(tens[d] + (u > 0 ? '-' + units[10 + u] : ''))
+        } else if (u === 1 && d > 1) {
+          parts.push(tens[d] + ' et un')
+        } else if (u > 0) {
+          parts.push(tens[d] + '-' + units[u])
+        } else {
+          if (d === 8) parts.push('quatre-vingts')
+          else parts.push(tens[d])
+        }
+      }
+    }
+
+    return parts.join(' ')
+  }
+
+  function translate(num: number): string {
+    if (num === 0) return ''
+    const billion = Math.floor(num / 1000000000)
+    const million = Math.floor((num % 1000000000) / 1000000)
+    const thousand = Math.floor((num % 1000000) / 1000)
+    const rest = num % 1000
+
+    const parts: string[] = []
+    if (billion > 0) parts.push(below1000(billion) + (billion > 1 ? ' milliards' : ' milliard'))
+    if (million > 0) parts.push(below1000(million) + (million > 1 ? ' millions' : ' million'))
+    if (thousand > 0) parts.push(below1000(thousand) + (thousand > 1 ? ' mille' : ' mille'))
+    if (rest > 0) parts.push(below1000(rest))
+
+    return parts.join(' ')
+  }
+
+  return translate(n).replace(/\s+/g, ' ').trim()
+}
 
 export default function PdfPreviewScreen() {
   const params = useLocalSearchParams<any>()
@@ -16,7 +70,6 @@ export default function PdfPreviewScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.primary }}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <ScreenHeader title="Aperçu du devis" showBack variant="green" rightIcon="share-outline" onRightPress={() => router.push({ pathname: '/document/share', params })} />
       <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
         <View style={styles.pdfCard}>
@@ -72,6 +125,7 @@ export default function PdfPreviewScreen() {
                 <Text style={styles.grandTotalLabel}>Total général</Text>
                 <Text style={styles.grandTotalValue}>{totalGeneral.toLocaleString('fr-FR')} FCFA</Text>
               </View>
+              <Text style={styles.totalInWords}>Arrêté la présente facture à la somme de : {numberToWords(totalGeneral)} francs CFA</Text>
             </View>
           </View>
           <View style={styles.signatureBlock}>
@@ -121,6 +175,7 @@ const styles = StyleSheet.create({
   grandTotalRow: { backgroundColor: COLORS.primaryLighter, borderRadius: RADIUS.sm, padding: 10, marginTop: 4 },
   grandTotalLabel: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
   grandTotalValue: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  totalInWords: { fontSize: 11, color: COLORS.textSecondary, textAlign: 'center', fontStyle: 'italic', marginTop: 8, lineHeight: 16 },
   signatureBlock: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORS.divider },
   signatureLabel: { fontSize: 11, color: COLORS.textSecondary },
   signatureScript: { fontSize: 16, color: COLORS.textPrimary, fontStyle: 'italic' },
