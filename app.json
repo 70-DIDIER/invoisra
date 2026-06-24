@@ -4,7 +4,7 @@
     "slug": "invosra",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/splash.png",
+    "icon": "./assets/images/app-icon.png",
     "scheme": ["invoisra", "invoica"],
     "userInterfaceStyle": "light",
     "splash": {
@@ -23,7 +23,7 @@
       "edgeToEdgeEnabled": true,
       "package": "com.invoisra.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/splash.png",
+        "foregroundImage": "./assets/images/app-icon.png",
         "backgroundColor": "#0E7D36"
       }
     },

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar as RNStatusBar } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { StatusBar } from 'expo-status-bar'
 import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/hooks/useAuth'
@@ -26,18 +27,19 @@ export default function DashboardScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <StatusBar style="light" />
       <View style={{ paddingTop: Math.max(insets.top, RNStatusBar.currentHeight ?? 24), backgroundColor: COLORS.primary }}>
         <View style={styles.headerInner}>
           <View>
             <Text style={styles.greeting}>Bonjour,</Text>
-            <Text style={styles.userName}>{user?.name || 'Artisan'} 👋</Text>
+            <Text style={styles.userName}>{user?.name || 'Artisan'}</Text>
           </View>
           <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons name="notifications-outline" size={24} color={COLORS.white} />
           </TouchableOpacity>
         </View>
       </View>
-      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false} nestedScrollEnabled>
         <Text style={styles.sectionTitle}>Vue d'ensemble</Text>
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: COLORS.primaryLighter }]}>

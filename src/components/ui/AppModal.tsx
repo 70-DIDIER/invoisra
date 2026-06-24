@@ -62,7 +62,7 @@ export default function AppModal({ visible, type = 'info', title, message, butto
             </View>
           )}
           {(!buttons || buttons.length === 0) && (
-            <TouchableOpacity style={[styles.btn, styles.btnPrimary, { marginTop: 12 }]} onPress={onClose}>
+            <TouchableOpacity style={[styles.btn, styles.btnPrimary, { marginTop: 20, width: '100%' }]} onPress={onClose}>
               <Text style={[styles.btnText, styles.btnTextPrimary]}>OK</Text>
             </TouchableOpacity>
           )}

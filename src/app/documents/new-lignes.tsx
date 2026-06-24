@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import ScreenHeader from '@/components/ui/ScreenHeader'
 import StepIndicator from '@/components/ui/StepIndicator'
@@ -14,6 +15,7 @@ interface LineItem {
 }
 
 export default function NewDocumentLignes() {
+  const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<any>()
   const [items, setItems] = useState<LineItem[]>(() => {
     if (params.items) {
@@ -48,7 +50,7 @@ export default function NewDocumentLignes() {
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
       <ScreenHeader title={params.type === 'invoice' ? 'Nouvelle facture' : 'Nouveau devis'} showBack variant="white" />
       <StepIndicator currentStep={2} />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: SPACING.lg }} keyboardShouldPersistTaps="handled">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: SPACING.lg, paddingBottom: insets.bottom + SPACING.lg }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
         <View style={styles.tableHeader}>
           <Text style={[styles.th, { flex: 2 }]}>Désignation</Text>
           <Text style={[styles.th, { flex: 0.7, textAlign: 'center' }]}>Qté</Text>
@@ -62,8 +64,8 @@ export default function NewDocumentLignes() {
         {items.map(item => (
           <View key={item.id} style={styles.itemRow}>
             <TextInput ref={r => { if (r) inputRefs.current.set(item.id, r) }} style={[styles.cell, { flex: 2 }]} value={item.designation} onChangeText={v => updateItem(item.id, 'designation', v)} placeholder="Article" placeholderTextColor={COLORS.textMuted} />
-            <TextInput style={[styles.cell, { flex: 0.7, textAlign: 'center' }]} value={item.quantity} onChangeText={v => updateItem(item.id, 'quantity', v)} keyboardType="numeric" onFocus={() => { if (item.quantity === '1') updateItem(item.id, 'quantity', '') }} />
-            <TextInput style={[styles.cell, { flex: 0.7, textAlign: 'right' }]} value={item.unitPrice} onChangeText={v => updateItem(item.id, 'unitPrice', v)} keyboardType="numeric" onFocus={() => { if (item.unitPrice === '0') updateItem(item.id, 'unitPrice', '') }} />
+            <TextInput style={[styles.cell, { flex: 0.7, textAlign: 'center' }]} value={item.quantity} onChangeText={v => updateItem(item.id, 'quantity', v)} keyboardType="numeric" placeholder="0" placeholderTextColor={COLORS.textMuted} onFocus={() => { if (item.quantity === '1') updateItem(item.id, 'quantity', '') }} />
+            <TextInput style={[styles.cell, { flex: 0.7, textAlign: 'right' }]} value={item.unitPrice} onChangeText={v => updateItem(item.id, 'unitPrice', v)} keyboardType="numeric" placeholder="0" placeholderTextColor={COLORS.textMuted} onFocus={() => { if (item.unitPrice === '0') updateItem(item.id, 'unitPrice', '') }} />
             <Text style={[styles.cellText, { flex: 0.8, textAlign: 'right' }]}>{(parseInt(item.quantity) * parseInt(item.unitPrice)).toLocaleString('fr-FR')}</Text>
             <TouchableOpacity onPress={() => removeItem(item.id)} style={styles.deleteBtn}>
               <Text style={styles.deleteBtnText}>X</Text>

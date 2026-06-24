@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { getClients } from '@/lib/client'
@@ -8,6 +8,7 @@ import type { Client } from '@/lib/types'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
 
 export default function ClientSelectScreen() {
+  const insets = useSafeAreaInsets()
   const [clients, setClients] = useState<Client[]>([])
   const [search, setSearch] = useState('')
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -38,7 +39,7 @@ export default function ClientSelectScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.primary }}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1, backgroundColor: COLORS.primary }}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}><Text style={styles.backBtn}>← Annuler</Text></TouchableOpacity>
         <Text style={styles.headerTitle}>Sélectionner un client</Text>
@@ -55,7 +56,7 @@ export default function ClientSelectScreen() {
       <FlatList
         data={clients}
         keyExtractor={item => item.id.toString()}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + SPACING.lg }]}
         ListEmptyComponent={<Text style={styles.empty}>Aucun client trouvé</Text>}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.clientCard} onPress={() => selectClient(item)}>

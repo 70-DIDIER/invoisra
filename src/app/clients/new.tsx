@@ -29,13 +29,13 @@ export default function NewClientScreen() {
         <TouchableOpacity onPress={() => router.back()}><Text style={styles.back}>← Retour</Text></TouchableOpacity>
         <Text style={styles.title}>Nouveau client</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Field label="Nom *" value={form.name} onChange={v => setForm({ ...form, name: v })} />
-        <Field label="Email" value={form.email} onChange={v => setForm({ ...form, email: v })} keyboard="email-address" />
-        <Field label="Téléphone" value={form.phone} onChange={v => setForm({ ...form, phone: v })} />
-        <Field label="Adresse" value={form.address} onChange={v => setForm({ ...form, address: v })} />
-        <Field label="Entreprise" value={form.company_name} onChange={v => setForm({ ...form, company_name: v })} />
+        <Field label="Nom *" value={form.name} onChange={v => setForm({ ...form, name: v })} placeholder="Nom complet" />
+        <Field label="Email" value={form.email} onChange={v => setForm({ ...form, email: v })} keyboard="email-address" placeholder="exemple@email.com" />
+        <Field label="Téléphone" value={form.phone} onChange={v => setForm({ ...form, phone: v })} keyboard="phone-pad" placeholder="Ex: +228 90 00 00 00" />
+        <Field label="Adresse" value={form.address} onChange={v => setForm({ ...form, address: v })} placeholder="Ex: Lomé, Togo" />
+        <Field label="Entreprise" value={form.company_name} onChange={v => setForm({ ...form, company_name: v })} placeholder="Nom de l'entreprise" />
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Enregistrer</Text>}
         </TouchableOpacity>
@@ -44,11 +44,11 @@ export default function NewClientScreen() {
   )
 }
 
-function Field({ label, value, onChange, keyboard }: { label: string; value: string; onChange: (v: string) => void; keyboard?: any }) {
+function Field({ label, value, onChange, keyboard, placeholder }: { label: string; value: string; onChange: (v: string) => void; keyboard?: any; placeholder?: string }) {
   return (
     <View style={styles.fieldGroup}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput style={styles.input} value={value} onChangeText={onChange} placeholderTextColor={COLORS.textMuted} keyboardType={keyboard || 'default'} />
+      <TextInput style={styles.input} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={COLORS.textMuted} keyboardType={keyboard || 'default'} />
     </View>
   )
 }

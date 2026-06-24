@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { View, Text, ScrollView, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import ScreenHeader from '@/components/ui/ScreenHeader'
 import StepIndicator from '@/components/ui/StepIndicator'
@@ -15,6 +16,7 @@ interface FeeItem {
 }
 
 export default function NewDocumentFrais() {
+  const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<any>()
   const [fees, setFees] = useState<FeeItem[]>(() => {
     if (params.fees) {
@@ -130,7 +132,7 @@ export default function NewDocumentFrais() {
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
       <ScreenHeader title={isEdit ? 'Modifier le document' : params.type === 'invoice' ? 'Nouvelle facture' : 'Nouveau devis'} showBack variant="white" />
       <StepIndicator currentStep={3} />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: SPACING.lg }} keyboardShouldPersistTaps="handled">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: SPACING.lg, paddingBottom: insets.bottom + SPACING.lg }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
         <View style={styles.tableHeader}>
           <Text style={[styles.th, { flex: 1.5 }]}>Frais</Text>
           <Text style={[styles.th, { flex: 0.8, textAlign: 'right' }]}>Montant</Text>
@@ -142,7 +144,7 @@ export default function NewDocumentFrais() {
         {fees.map(fee => (
           <View key={fee.id} style={styles.feeRow}>
             <TextInput ref={r => { if (r) feeRefs.current.set(fee.id, r) }} style={[styles.cell, { flex: 1.5 }]} value={fee.label} onChangeText={v => updateFee(fee.id, 'label', v)} placeholder="Libellé" placeholderTextColor={COLORS.textMuted} />
-            <TextInput style={[styles.cell, { flex: 0.8, textAlign: 'right' }]} value={fee.amount} onChangeText={v => updateFee(fee.id, 'amount', v)} keyboardType="numeric" onFocus={() => { if (fee.amount === '0') updateFee(fee.id, 'amount', '') }} />
+            <TextInput style={[styles.cell, { flex: 0.8, textAlign: 'right' }]} value={fee.amount} onChangeText={v => updateFee(fee.id, 'amount', v)} keyboardType="numeric" placeholder="0" placeholderTextColor={COLORS.textMuted} onFocus={() => { if (fee.amount === '0') updateFee(fee.id, 'amount', '') }} />
             <TouchableOpacity onPress={() => removeFee(fee.id)} style={styles.deleteBtn}>
               <Text style={styles.deleteBtnText}>X</Text>
             </TouchableOpacity>

@@ -12,6 +12,7 @@ interface AuthContextType {
   logout: () => Promise<void>
   googleLogin: () => Promise<string>
   handleGoogleCallbackUrl: (url: string) => Promise<void>
+  saveAuth: (token: string, userData: User) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -85,6 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function saveAuth(token: string, userData: User) {
+    await AsyncStorage.setItem('auth-token', token)
+    await AsyncStorage.setItem('auth-user', JSON.stringify(userData))
+    setToken(token)
+    setUser(userData)
+  }
+
   async function googleLogin() {
     console.log('[GoogleAuth] Fetching OAuth URL...')
     const response = await api.get<{ url: string }>('/auth/google/redirect')
@@ -128,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, register, logout, googleLogin, handleGoogleCallbackUrl }}
+      value={{ user, token, isLoading, login, register, logout, googleLogin, handleGoogleCallbackUrl, saveAuth }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { router, useLocalSearchParams } from 'expo-router'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenHeader from '@/components/ui/ScreenHeader'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
@@ -11,20 +11,17 @@ import AppModal from '@/components/ui/AppModal'
 
 export default function ShareScreen() {
   const { id, clientEmail } = useLocalSearchParams<{ id?: string; clientEmail?: string }>()
+  const insets = useSafeAreaInsets()
   const [loading, setLoading] = useState<string | null>(null)
-  const [modal, setModal] = useState({ visible: false, type: 'success' as 'success'|'error', title: '', message: '' })
+  const [modal, setModal] = useState({ visible: false, type: 'success' as 'success' | 'error', title: '', message: '' })
 
   async function handleShare(key: string) {
     if (!id) return
     setLoading(key)
     try {
       switch (key) {
-        case 'whatsapp':
-          await shareViaWhatsApp(parseInt(id))
-          break
-        case 'telegram':
-          await shareViaTelegram(parseInt(id))
-          break
+        case 'whatsapp': await shareViaWhatsApp(parseInt(id)); break
+        case 'telegram': await shareViaTelegram(parseInt(id)); break
         case 'email':
           if (clientEmail) {
             await sendDocumentEmail(parseInt(id), clientEmail)
@@ -52,9 +49,9 @@ export default function ShareScreen() {
   ]
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.primary }}>
+    <SafeAreaView edges={['left', 'right']} style={{ flex: 1, backgroundColor: COLORS.primary }}>
       <ScreenHeader title="Partager le document" showBack variant="green" />
-      <View style={styles.body}>
+      <View style={[styles.body, { paddingBottom: insets.bottom + SPACING.lg }]}>
         <View style={styles.docIconWrap}>
           <View style={styles.docIcon}>
             <View style={styles.docFold} />
@@ -68,17 +65,11 @@ export default function ShareScreen() {
         <Text style={styles.readySub}>Que voulez-vous faire ?</Text>
         <View style={styles.optionsList}>
           {SHARE_OPTIONS.map(opt => (
-            <TouchableOpacity
-              key={opt.key}
-              style={styles.optionRow}
-              onPress={() => handleShare(opt.key)}
-              disabled={loading === opt.key}
-            >
+            <TouchableOpacity key={opt.key} style={styles.optionRow} onPress={() => handleShare(opt.key)} disabled={loading === opt.key}>
               <View style={[styles.optionIcon, { backgroundColor: opt.color + '20' }]}>
                 {loading === opt.key
                   ? <ActivityIndicator size="small" color={opt.color} />
-                  : <Ionicons name={opt.icon as any} size={20} color={opt.color} />
-                }
+                  : <Ionicons name={opt.icon as any} size={20} color={opt.color} />}
               </View>
               <Text style={styles.optionLabel}>{opt.label}</Text>
               <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenHeader from '@/components/ui/ScreenHeader'
@@ -15,12 +16,13 @@ const TEMPLATES = [
 ]
 
 export default function PdfTemplatesScreen() {
+  const insets = useSafeAreaInsets()
   const [selected, setSelected] = useState('1')
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.primary }}>
       <ScreenHeader title="Modèles de PDF" showBack variant="green" />
-      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
+      <ScrollView style={styles.body} contentContainerStyle={[styles.bodyContent, { paddingBottom: insets.bottom + SPACING.lg }]} nestedScrollEnabled>
         <Text style={styles.info}>Choisissez un modèle pour vos documents PDF</Text>
         {TEMPLATES.map(t => (
           <TouchableOpacity key={t.id} style={styles.templateCard} onPress={() => setSelected(t.id)}>
@@ -51,7 +53,7 @@ export default function PdfTemplatesScreen() {
 
 const styles = StyleSheet.create({
   body: { flex: 1, backgroundColor: COLORS.background, borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, marginTop: -16 },
-  bodyContent: { padding: SPACING.lg },
+  bodyContent: { padding: SPACING.lg, paddingBottom: SPACING.lg },
   info: { fontSize: 13, color: COLORS.textSecondary, marginBottom: SPACING.md, textAlign: 'center' },
   templateCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white, borderRadius: RADIUS.md, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
   thumbnail: { width: 70, height: 80, borderRadius: RADIUS.sm, borderWidth: 1, borderTopWidth: 8, borderColor: COLORS.border, overflow: 'hidden', padding: 6, justifyContent: 'center' },

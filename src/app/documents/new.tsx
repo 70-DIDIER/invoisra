@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import ScreenHeader from '@/components/ui/ScreenHeader'
@@ -19,6 +20,7 @@ function cleanNotes(notes: string | null): string {
 }
 
 export default function NewDocumentStep1() {
+  const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{
     type?: string
     selectedClientId?: string
@@ -46,6 +48,8 @@ export default function NewDocumentStep1() {
     return d.toISOString().split('T')[0]
   })())
   const [notes, setNotes] = useState(cleanNotes(params.notes ?? null) || '')
+  const [clientError, setClientError] = useState('')
+  const [projectNameError, setProjectNameError] = useState('')
   const [showPicker, setShowPicker] = useState<'issue' | 'validity' | null>(null)
   const [checking, setChecking] = useState(true)
   const [modal, setModal] = useState<{ visible: boolean; title: string; message: string; buttons?: { text: string; onPress?: () => void; primary?: boolean }[] }>({ visible: false, title: '', message: '' })
@@ -106,6 +110,16 @@ export default function NewDocumentStep1() {
   }, [params.selectedClientId, params.selectedClientName, params.editId]))
 
   function handleNext() {
+    if (!client) {
+      setClientError('Le client est obligatoire')
+      return
+    }
+    setClientError('')
+    if (!projectName.trim()) {
+      setProjectNameError('Le chantier / projet est obligatoire')
+      return
+    }
+    setProjectNameError('')
     const data = {
       editId: params.editId,
       type, number, issueDate, validUntil,
@@ -131,16 +145,25 @@ export default function NewDocumentStep1() {
       <ScreenHeader title={params.editId ? 'Modifier le document' : type === 'quote' ? 'Nouveau devis' : 'Nouvelle facture'} showBack variant="white" />
       <StepIndicator currentStep={1} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: SPACING.lg }} keyboardShouldPersistTaps="handled">
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: SPACING.lg, paddingBottom: insets.bottom + SPACING.lg }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
           <FormFieldCard label="Numéro" value={number} editable={false} />
           <FormFieldCard label="Date d'émission" value={issueDate} rightIcon="calendar-outline" onPress={() => setShowPicker('issue')} />
           <FormFieldCard
             label="Client"
             value={client?.name || 'Sélectionner...'}
             rightIcon="chevron-forward"
-            onPress={() => router.push('/clients/select')}
+            onPress={() => { setClientError(''); router.push('/clients/select') }}
+            required
+            error={clientError}
           />
-          <FormFieldCard label="Chantier / Projet" value={projectName} onChangeText={setProjectName} placeholder="Ex: Construction immeuble R+2" />
+          <FormFieldCard
+            label="Chantier / Projet"
+            value={projectName}
+            onChangeText={text => { setProjectName(text); if (text.trim()) setProjectNameError('') }}
+            placeholder="Ex: Construction immeuble R+2"
+            required
+            error={projectNameError}
+          />
           <FormFieldCard label="Valable jusqu'au" value={validUntil} rightIcon="calendar-outline" onPress={() => setShowPicker('validity')} />
           <FormFieldCard label="Notes" value={notes} onChangeText={setNotes} placeholder="Description..." multiline />
           <View style={{ marginTop: SPACING.md }}>

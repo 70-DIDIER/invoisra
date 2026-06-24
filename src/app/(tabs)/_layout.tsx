@@ -1,21 +1,31 @@
+import { useState, useEffect } from 'react'
 import { Tabs, Redirect } from 'expo-router'
 import { View, ActivityIndicator } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '@/hooks/useAuth'
 import { COLORS } from '@/constants/colors'
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets()
   const { user, isLoading } = useAuth()
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null)
 
-  if (isLoading) {
+  useEffect(() => {
+    AsyncStorage.getItem('onboarding-done').then(val => setOnboardingDone(val === '1'))
+  }, [])
+
+  if (isLoading || onboardingDone === null) {
     return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background }}>
       <ActivityIndicator size="large" color={COLORS.primary} />
     </View>
   }
 
-  if (!user) return <Redirect href="/welcome" />
+  if (!user) {
+    if (!onboardingDone) return <Redirect href="/onboarding" />
+    return <Redirect href="/welcome" />
+  }
 
   return (
     <Tabs

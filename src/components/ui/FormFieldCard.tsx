@@ -12,15 +12,18 @@ interface FormFieldCardProps {
   editable?: boolean
   multiline?: boolean
   style?: ViewStyle
+  required?: boolean
+  error?: string
 }
 
 export default function FormFieldCard({
-  label, value, onChangeText, placeholder, rightIcon, onPress, editable = true, multiline = false, style,
+  label, value, onChangeText, placeholder, rightIcon, onPress, editable = true, multiline = false, style, required, error,
 }: FormFieldCardProps) {
   const content = (
-    <View style={[styles.card, style]}>
+    <View>
+    <View style={[styles.card, error ? styles.cardError : undefined, style]}>
       <View style={styles.textWrap}>
-        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.label}>{label}{required && <Text style={styles.required}> *</Text>}</Text>
         {onPress ? (
           <Text style={styles.value}>{value}</Text>
         ) : (
@@ -37,6 +40,8 @@ export default function FormFieldCard({
       </View>
       {rightIcon && <Ionicons name={rightIcon as any} size={18} color={COLORS.textSecondary} />}
     </View>
+    {error ? <Text style={styles.errorText}>{error}</Text> : null}
+    </View>
   )
 
   if (onPress) {
@@ -49,11 +54,14 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: RADIUS.md, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 12,
+    borderRadius: RADIUS.md, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 4,
   },
+  cardError: { borderColor: COLORS.danger },
   textWrap: { flex: 1 },
   label: { fontSize: 12, color: COLORS.textMuted, marginBottom: 2 },
+  required: { color: COLORS.danger },
   value: { fontSize: 15, color: COLORS.textPrimary, fontWeight: '500' },
   input: { padding: 0, margin: 0 },
   inputMultiline: { minHeight: 40, textAlignVertical: 'top' },
+  errorText: { fontSize: 12, color: COLORS.danger, marginBottom: 12, marginTop: 2, marginLeft: 4 },
 })

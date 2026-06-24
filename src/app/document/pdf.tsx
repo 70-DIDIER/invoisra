@@ -1,9 +1,13 @@
+import { useState, useEffect } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenHeader from '@/components/ui/ScreenHeader'
 import { OutlineButton, PrimaryButton } from '@/components/ui/Buttons'
+import { getCompany } from '@/lib/company'
+import { API_BASE_URL } from '@/lib/api'
+import type { Company } from '@/lib/types'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
 
 function numberToWords(n: number): string {
@@ -60,25 +64,42 @@ function numberToWords(n: number): string {
   return translate(n).replace(/\s+/g, ' ').trim()
 }
 
+const SERVER_BASE = API_BASE_URL.replace('/api/v1', '')
+
+function buildUrl(path?: string | null): string | null {
+  if (!path) return null
+  if (path.startsWith('http')) return path
+  return `${SERVER_BASE}${path}`
+}
+
 export default function PdfPreviewScreen() {
   const params = useLocalSearchParams<any>()
+  const [company, setCompany] = useState<Company | null>(null)
   const items = params.items ? JSON.parse(params.items as string) : []
   const fees = params.fees ? JSON.parse(params.fees as string) : []
   const sousTotal = parseInt(params.sousTotal || '0')
   const totalFees = fees.reduce((s: number, f: any) => s + (parseInt(f.amount) || 0), 0)
-  const totalGeneral = parseInt(params.totalGeneral || '0')
+  const totalGeneral = parseInt(params.totalGeneral || '0') || (sousTotal + totalFees)
+
+  useEffect(() => {
+    getCompany().then(setCompany).catch(() => {})
+  }, [])
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.primary }}>
-      <ScreenHeader title="Aperçu du devis" showBack variant="green" rightIcon="share-outline" onRightPress={() => router.push({ pathname: '/document/share', params })} />
-      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
+    <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: COLORS.primary }}>
+      <ScreenHeader title="Aperçu du devis" showBack variant="green" rightIcon="share-outline" onRightPress={() => router.push({ pathname: '/documents/share', params })} />
+      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} nestedScrollEnabled>
         <View style={styles.pdfCard}>
           <View style={styles.companyBlock}>
-            <Image source={require('../../../assets/images/logo.png')} style={styles.logoImg} />
-            <Text style={styles.companyName}>ATELIER PRO SERVICES</Text>
-            <Text style={styles.companyInfo}>Lomé, Togo</Text>
-            <Text style={styles.companyInfo}>+228 90 00 00 00</Text>
-            <Text style={styles.companyInfo}>contact@atelierpro.tg</Text>
+            {buildUrl(company?.logo) ? (
+              <Image source={{ uri: buildUrl(company?.logo)! }} style={styles.logoImg} />
+            ) : (
+              <Image source={require('../../../assets/images/logo.png')} style={styles.logoImg} />
+            )}
+            <Text style={styles.companyName}>{company?.name || ''}</Text>
+            {!!company?.address && <Text style={styles.companyInfo}>{company.address}</Text>}
+            {!!company?.phone && <Text style={styles.companyInfo}>{company.phone}</Text>}
+            {!!company?.email && <Text style={styles.companyInfo}>{company.email}</Text>}
           </View>
           <View style={styles.divider} />
           <Text style={styles.docTypeTitle}>DEVIS</Text>
@@ -125,19 +146,30 @@ export default function PdfPreviewScreen() {
                 <Text style={styles.grandTotalLabel}>Total général</Text>
                 <Text style={styles.grandTotalValue}>{totalGeneral.toLocaleString('fr-FR')} FCFA</Text>
               </View>
-              <Text style={styles.totalInWords}>Arrêté la présente facture à la somme de : {numberToWords(totalGeneral)} francs CFA</Text>
+              <View style={styles.totalInWordsBox}>
+                <Text style={styles.totalInWordsLabel}>Arrêté à la somme de :</Text>
+                <Text style={styles.totalInWords}>{numberToWords(totalGeneral).charAt(0).toUpperCase() + numberToWords(totalGeneral).slice(1)} francs CFA</Text>
+              </View>
             </View>
           </View>
           <View style={styles.signatureBlock}>
-            <Text style={styles.signatureLabel}>Jean Kossi / Responsable</Text>
-            <Text style={styles.signatureScript}>Signature</Text>
-            <View style={styles.stampPreview}>
-              <Text style={styles.stampPreviewText}>T</Text>
-            </View>
+            <Text style={styles.signatureLabel}>{company?.manager_name || company?.name || ''}</Text>
+            {buildUrl(company?.signature) ? (
+              <Image source={{ uri: buildUrl(company?.signature)! }} style={styles.signatureImg} resizeMode="contain" />
+            ) : (
+              <Text style={styles.signatureScript}>Signature</Text>
+            )}
+            {buildUrl(company?.stamp) ? (
+              <Image source={{ uri: buildUrl(company?.stamp)! }} style={styles.stampImg} resizeMode="contain" />
+            ) : (
+              <View style={styles.stampPreview}>
+                <Text style={styles.stampPreviewText}>T</Text>
+              </View>
+            )}
           </View>
         </View>
         <View style={styles.actionBtns}>
-          <View style={{ flex: 1 }}><OutlineButton label="Partager" icon="share-outline" onPress={() => router.push({ pathname: '/document/share', params })} /></View>
+          <View style={{ flex: 1 }}><OutlineButton label="Partager" icon="share-outline" onPress={() => router.push({ pathname: '/documents/share', params })} /></View>
           <View style={{ width: 12 }} />
           <View style={{ flex: 1 }}><PrimaryButton label="Télécharger PDF" icon="download-outline" onPress={() => {}} /></View>
         </View>
@@ -175,11 +207,15 @@ const styles = StyleSheet.create({
   grandTotalRow: { backgroundColor: COLORS.primaryLighter, borderRadius: RADIUS.sm, padding: 10, marginTop: 4 },
   grandTotalLabel: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
   grandTotalValue: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
-  totalInWords: { fontSize: 11, color: COLORS.textSecondary, textAlign: 'center', fontStyle: 'italic', marginTop: 8, lineHeight: 16 },
+  totalInWordsBox: { marginTop: 10, backgroundColor: COLORS.background, borderRadius: RADIUS.sm, padding: 8, borderLeftWidth: 3, borderLeftColor: COLORS.primary },
+  totalInWordsLabel: { fontSize: 10, color: COLORS.textMuted, fontWeight: '600', marginBottom: 2, textTransform: 'uppercase' },
+  totalInWords: { fontSize: 12, color: COLORS.textPrimary, fontStyle: 'italic', lineHeight: 17 },
   signatureBlock: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORS.divider },
-  signatureLabel: { fontSize: 11, color: COLORS.textSecondary },
+  signatureLabel: { fontSize: 11, color: COLORS.textSecondary, flex: 1 },
   signatureScript: { fontSize: 16, color: COLORS.textPrimary, fontStyle: 'italic' },
+  signatureImg: { width: 80, height: 40 },
   stampPreview: { width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: COLORS.primary, justifyContent: 'center', alignItems: 'center' },
   stampPreviewText: { color: COLORS.primary, fontWeight: '700', fontSize: 14 },
+  stampImg: { width: 50, height: 50 },
   actionBtns: { flexDirection: 'row', marginTop: SPACING.lg },
 })

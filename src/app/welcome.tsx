@@ -1,11 +1,13 @@
 import { Text, View, TouchableOpacity, StyleSheet, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { COLORS, RADIUS, SPACING } from '@/constants/colors'
 
 export default function WelcomeScreen() {
   return (
     <SafeAreaView style={styles.safe}>
+      <StatusBar style="light" />
       <View style={styles.content}>
         <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
         <Text style={styles.title}>Invoiça</Text>

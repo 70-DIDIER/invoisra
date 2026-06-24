@@ -47,13 +47,13 @@ export default function CompanyEditScreen() {
         <TouchableOpacity onPress={() => router.back()}><Text style={styles.back}>← Retour</Text></TouchableOpacity>
         <Text style={styles.title}>{hasCompany ? 'Modifier' : 'Configurer'} l'entreprise</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Field label="Nom *" value={form.name} onChange={v => setForm({ ...form, name: v })} />
-        <Field label="Adresse *" value={form.address} onChange={v => setForm({ ...form, address: v })} />
-        <Field label="Téléphone *" value={form.phone} onChange={v => setForm({ ...form, phone: v })} />
-        <Field label="Email" value={form.email} onChange={v => setForm({ ...form, email: v })} keyboard="email-address" />
-        <Field label="Gérant" value={form.manager_name} onChange={v => setForm({ ...form, manager_name: v })} />
+        <Field label="Nom *" value={form.name} onChange={v => setForm({ ...form, name: v })} placeholder="Nom de votre entreprise" />
+        <Field label="Adresse *" value={form.address} onChange={v => setForm({ ...form, address: v })} placeholder="Ex: Lomé, Togo" />
+        <Field label="Téléphone *" value={form.phone} onChange={v => setForm({ ...form, phone: v })} keyboard="phone-pad" placeholder="Ex: +228 90 00 00 00" />
+        <Field label="Email" value={form.email} onChange={v => setForm({ ...form, email: v })} keyboard="email-address" placeholder="contact@entreprise.com" />
+        <Field label="Gérant" value={form.manager_name} onChange={v => setForm({ ...form, manager_name: v })} placeholder="Nom du responsable" />
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
           {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Enregistrer</Text>}
         </TouchableOpacity>
@@ -62,11 +62,11 @@ export default function CompanyEditScreen() {
   )
 }
 
-function Field({ label, value, onChange, keyboard }: { label: string; value: string; onChange: (v: string) => void; keyboard?: any }) {
+function Field({ label, value, onChange, keyboard, placeholder }: { label: string; value: string; onChange: (v: string) => void; keyboard?: any; placeholder?: string }) {
   return (
     <View style={styles.fieldGroup}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput style={styles.input} value={value} onChangeText={onChange} placeholderTextColor={COLORS.textMuted} keyboardType={keyboard || 'default'} />
+      <TextInput style={styles.input} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={COLORS.textMuted} keyboardType={keyboard || 'default'} />
     </View>
   )
 }

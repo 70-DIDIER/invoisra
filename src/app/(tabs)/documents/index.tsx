@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { StatusBar } from 'expo-status-bar'
 import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { getDocuments } from '@/lib/document'
@@ -27,7 +28,8 @@ export default function DocumentsScreen() {
   )
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
+      <StatusBar style="light" />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mes documents</Text>
         <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -58,6 +60,7 @@ export default function DocumentsScreen() {
       <FlatList
         data={filtered}
         keyExtractor={item => item.id.toString()}
+        style={{ backgroundColor: COLORS.background }}
         contentContainerStyle={styles.list}
         ListEmptyComponent={<Text style={styles.empty}>Aucun document trouvé</Text>}
         renderItem={({ item }) => (

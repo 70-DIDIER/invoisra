@@ -67,15 +67,15 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar style="dark" />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>← Retour</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Inscription</Text>
         <Text style={styles.subtitle}>Créez votre compte Invoiça</Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <TextInput style={styles.input} placeholder="Nom" placeholderTextColor={COLORS.textMuted} value={name} onChangeText={setName} />
-        <TextInput style={styles.input} placeholder="Email" placeholderTextColor={COLORS.textMuted} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+        <TextInput style={styles.input} placeholder="Nom complet" placeholderTextColor={COLORS.textMuted} value={name} onChangeText={setName} />
+        <TextInput style={styles.input} placeholder="votre@email.com" placeholderTextColor={COLORS.textMuted} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
         <View style={styles.passwordContainer}>
           <TextInput style={styles.passwordInput} placeholder="Mot de passe" placeholderTextColor={COLORS.textMuted} value={password} onChangeText={setPassword} secureTextEntry={!showPassword} />
           <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>

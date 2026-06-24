@@ -10,13 +10,13 @@ interface Props {
   onClose: () => void
 }
 
-export default function GoogleAuthBrowser({ url, visible, onSuccess, onError, onClose }: Props) {
+export default function GoogleAuthBrowser({ url, visible, onError, onClose }: Props) {
   const [message, setMessage] = useState('Ouverture du navigateur...')
 
   useEffect(() => {
     if (!visible || !url) return
 
-    setMessage('Ouverture de Google...')
+    setMessage('Redirection vers Google...')
 
     const timer = setTimeout(async () => {
       console.log('[GoogleAuth] Opening browser...')

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { StatusBar } from 'expo-status-bar'
 import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { getClients } from '@/lib/client'
@@ -11,6 +12,7 @@ export default function ClientsScreen() {
   const [clients, setClients] = useState<Client[]>([])
   const [search, setSearch] = useState('')
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const searchRef = useRef('')
 
   async function loadClients(query?: string) {
     try {
@@ -19,16 +21,18 @@ export default function ClientsScreen() {
     } catch { }
   }
 
-  useFocusEffect(useCallback(() => { loadClients() }, []))
+  useFocusEffect(useCallback(() => { loadClients(searchRef.current || undefined) }, []))
 
   useEffect(() => {
+    searchRef.current = search
     if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => loadClients(search), 400)
+    timerRef.current = setTimeout(() => loadClients(search || undefined), 400)
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [search])
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
+      <StatusBar style="light" />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Clients</Text>
       </View>
@@ -44,6 +48,7 @@ export default function ClientsScreen() {
       <FlatList
         data={clients}
         keyExtractor={item => item.id.toString()}
+        style={{ backgroundColor: COLORS.background }}
         contentContainerStyle={styles.list}
         ListEmptyComponent={<Text style={styles.empty}>Aucun client trouvé</Text>}
         renderItem={({ item }) => (

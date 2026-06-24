@@ -25,12 +25,10 @@ export interface Company {
 export interface Client {
   id: number
   user_id: number
-  company_id: number
   name: string
   email: string | null
   phone: string | null
   address: string | null
-  company_name: string | null
   created_at: string
 }
 
