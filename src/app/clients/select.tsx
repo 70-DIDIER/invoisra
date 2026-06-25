@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, marginLeft: 8, fontSize: 14, color: COLORS.textPrimary },
   addBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.white, justifyContent: 'center', alignItems: 'center' },
   addBtnText: { color: COLORS.primary, fontSize: 22, fontWeight: '600' },
-  list: { padding: SPACING.lg, backgroundColor: COLORS.background, minHeight: '100%' },
+  list: { padding: SPACING.lg, backgroundColor: COLORS.background, paddingBottom: SPACING.xl },
   empty: { textAlign: 'center', color: COLORS.textSecondary, marginTop: 40, fontSize: 14 },
   clientCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white, borderRadius: RADIUS.md, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: COLORS.border },
   clientIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primaryLighter, justifyContent: 'center', alignItems: 'center', marginRight: 12 },

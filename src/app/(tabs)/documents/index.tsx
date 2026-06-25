@@ -60,8 +60,9 @@ export default function DocumentsScreen() {
       <FlatList
         data={filtered}
         keyExtractor={item => item.id.toString()}
-        style={{ backgroundColor: COLORS.background }}
+        style={{ flex: 1, backgroundColor: COLORS.background }}
         contentContainerStyle={styles.list}
+        nestedScrollEnabled
         ListEmptyComponent={<Text style={styles.empty}>Aucun document trouvé</Text>}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.docCard} onPress={() => router.push(`/documents/${item.id}`)}>
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   searchBar: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.background, borderRadius: RADIUS.sm, paddingHorizontal: 10, paddingVertical: 8 },
   searchInput: { flex: 1, marginLeft: 6, fontSize: 13, color: COLORS.textPrimary },
   filterBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' },
-  list: { padding: SPACING.lg, backgroundColor: COLORS.background, minHeight: '100%' },
+  list: { padding: SPACING.lg, backgroundColor: COLORS.background, paddingBottom: SPACING.xl },
   empty: { textAlign: 'center', color: COLORS.textSecondary, marginTop: 40, fontSize: 14 },
   docCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.white, borderRadius: RADIUS.md, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: COLORS.border },
   docNumber: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },

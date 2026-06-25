@@ -39,7 +39,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
       </View>
-      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+      <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false} nestedScrollEnabled scrollEventThrottle={16}>
         <Text style={styles.sectionTitle}>Vue d'ensemble</Text>
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: COLORS.primaryLighter }]}>
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   headerInner: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingHorizontal: SPACING.lg, paddingTop: 12, paddingBottom: 28 },
   greeting: { color: 'rgba(255,255,255,0.85)', fontSize: 14 },
   userName: { color: COLORS.white, fontSize: 20, fontWeight: '700', marginTop: 2 },
-  body: { flex: 1, backgroundColor: COLORS.background, borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, marginTop: -16 },
+  body: { flex: 1, backgroundColor: COLORS.background, borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, marginTop: -16, zIndex: 1 },
   bodyContent: { padding: SPACING.lg, paddingBottom: SPACING.xl },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 12, marginTop: 4 },
   statsRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
